@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getUserEnrollments } from '@/services/enrollment.service'
+import { getUserEnrollments, type EnrollmentWithProduct } from '@/services/enrollment.service'
 import Link from 'next/link'
 import styles from './enrollments.module.css'
 
@@ -17,16 +17,10 @@ export default async function EnrollmentsPage() {
   const session = await auth()
   if (!session?.user) return null
 
-  let enrollments: {
-    id: string; product_title: string; product_slug: string;
-    product_type: string; domain_slug: string;
-    payment_status: string; access_status: string; moodle_enrollment_status: boolean;
-    created_at: string
-  }[] = []
+  let enrollments: EnrollmentWithProduct[] = []
 
   try {
-    const raw = await getUserEnrollments(session.user.id)
-    enrollments = raw as typeof enrollments
+    enrollments = await getUserEnrollments(session.user.id)
   } catch { /* DB unavailable */ }
 
   return (

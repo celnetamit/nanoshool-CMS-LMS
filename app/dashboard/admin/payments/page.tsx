@@ -27,7 +27,7 @@ export default async function AdminPaymentsPage() {
        ORDER BY pay.created_at DESC
        LIMIT 200`,
       []
-    ) as typeof payments
+    ) as unknown as typeof payments
 
     const [totalsRow] = await query<{
       paid_total: string; refunded_total: string; failed_count: string

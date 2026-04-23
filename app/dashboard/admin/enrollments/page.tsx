@@ -38,7 +38,7 @@ export default async function AdminEnrollmentsPage() {
        ORDER BY e.created_at DESC
        LIMIT 100`,
       []
-    ) as typeof enrollments
+    ) as unknown as typeof enrollments
   } catch { /* DB unavailable */ }
 
   return (

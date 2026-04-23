@@ -13,7 +13,7 @@ export default async function InvoicesPage() {
 
   try {
     const raw = await getUserInvoices(session.user.id)
-    invoices = raw as typeof invoices
+    invoices = raw as unknown as typeof invoices
   } catch { /* DB unavailable */ }
 
   return (

@@ -26,7 +26,7 @@ export default async function ProgramManagerOverviewPage() {
        GROUP BY p.id, d.name
        ORDER BY total DESC`,
       []
-    ) as typeof cohorts
+    ) as unknown as typeof cohorts
   } catch { /* DB unavailable */ }
 
   const grandTotal = {

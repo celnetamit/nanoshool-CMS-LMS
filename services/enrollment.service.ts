@@ -1,6 +1,13 @@
 import { query, queryOne } from '@/lib/db'
 import { redis } from '@/lib/redis'
-import type { DBEnrollment, DBPayment, AccessStatus, PaymentStatus } from '@/types'
+import type { DBEnrollment, AccessStatus, PaymentStatus } from '@/types'
+
+export type EnrollmentWithProduct = DBEnrollment & {
+  product_title: string
+  product_slug: string
+  product_type: string
+  domain_slug: string
+}
 
 // ─── Create or get existing enrollment (idempotent) ────────
 export async function createEnrollment({
@@ -95,12 +102,12 @@ export async function checkAccess(userId: string, productId: string): Promise<bo
 }
 
 // ─── Get all enrollments for a user (with cache) ───────────
-export async function getUserEnrollments(userId: string): Promise<DBEnrollment[]> {
+export async function getUserEnrollments(userId: string): Promise<EnrollmentWithProduct[]> {
   const cacheKey = `enrollments:user:${userId}`
   const cached = await redis.get(cacheKey)
   if (cached) return JSON.parse(cached)
 
-  const enrollments = await query<DBEnrollment>(
+  const enrollments = await query<EnrollmentWithProduct>(
     `SELECT e.*, p.title AS product_title, p.slug AS product_slug,
             p.type AS product_type, d.slug AS domain_slug
      FROM enrollments e

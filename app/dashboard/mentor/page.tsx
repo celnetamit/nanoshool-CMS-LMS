@@ -26,7 +26,7 @@ export default async function MentorOverviewPage() {
        ORDER BY enrollment_count DESC
        LIMIT 20`,
       [session.user.email, session.user.role]
-    ) as typeof programs
+    ) as unknown as typeof programs
   } catch { /* DB unavailable */ }
 
   return (

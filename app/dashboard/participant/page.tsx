@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getUserEnrollments } from '@/services/enrollment.service'
+import { getUserEnrollments, type EnrollmentWithProduct } from '@/services/enrollment.service'
 import Link from 'next/link'
 import styles from './overview.module.css'
 
@@ -7,10 +7,9 @@ export default async function ParticipantOverviewPage() {
   const session = await auth()
   if (!session?.user) return null
 
-  let enrollments: { access_status: string; payment_status: string; moodle_enrollment_status: boolean }[] = []
+  let enrollments: EnrollmentWithProduct[] = []
   try {
-    const raw = await getUserEnrollments(session.user.id)
-    enrollments = raw as typeof enrollments
+    enrollments = await getUserEnrollments(session.user.id)
   } catch { /* DB unavailable */ }
 
   const stats = {

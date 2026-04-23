@@ -22,7 +22,7 @@ export default async function AdminUsersPage() {
        ORDER BY u.created_at DESC
        LIMIT 100`,
       []
-    ) as typeof users
+    ) as unknown as typeof users
   } catch { /* DB unavailable */ }
 
   return (
