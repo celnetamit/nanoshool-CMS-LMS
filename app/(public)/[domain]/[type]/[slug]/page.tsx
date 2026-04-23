@@ -24,12 +24,12 @@ export default async function ProductDetailPage({ params }: Props) {
 
   let product: (DBProduct & { domain_name: string; domain_slug: string }) | null = null
   try {
-    product = await queryOne(
+    product = await queryOne<DBProduct & { domain_name: string; domain_slug: string }>(
       `SELECT p.*, d.name AS domain_name, d.slug AS domain_slug
        FROM products p JOIN domains d ON d.id = p.domain_id
        WHERE d.slug = $1 AND p.type = $2 AND p.slug = $3 AND p.status = 'published'`,
       [domain, dbType, slug]
-    ) as typeof product
+    )
   } catch { /* DB unavailable */ }
 
   if (!product) {

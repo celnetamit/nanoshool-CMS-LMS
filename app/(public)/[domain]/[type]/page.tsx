@@ -37,14 +37,14 @@ export default async function ProductListingPage({ params }: Props) {
   // Fetch products from DB
   let products: (DBProduct & { domain_name: string; domain_slug: string })[] = []
   try {
-    products = await query(
+    products = await query<DBProduct & { domain_name: string; domain_slug: string }>(
       `SELECT p.*, d.name AS domain_name, d.slug AS domain_slug
        FROM products p
        JOIN domains d ON d.id = p.domain_id
        WHERE d.slug = $1 AND p.type = $2 AND p.status = 'published'
        ORDER BY p.created_at DESC`,
       [domain, productType]
-    ) as typeof products
+    )
   } catch {
     // DB not available yet — return empty state
   }
