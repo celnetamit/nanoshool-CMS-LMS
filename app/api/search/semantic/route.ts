@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// MOCK: In a real implementation, this would connect to Pinecone/Weaviate
-// or use pgvector to do similarity search based on text embeddings.
+import { query } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -11,30 +9,54 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ hits: [] })
   }
 
-  // Artificial delay to simulate vector search
-  await new Promise((r) => setTimeout(r, 600))
+  try {
+    const normalized = q.trim()
+    const rows = await query<{
+      id: string
+      title: string
+      slug: string
+      type: string
+      domain: string
+      relevance_score: string | number
+    }>(
+      `SELECT
+         p.id,
+         p.title,
+         p.slug,
+         p.type,
+         d.slug AS domain,
+         ts_rank(
+           setweight(to_tsvector('simple', COALESCE(p.title, '')), 'A') ||
+           setweight(to_tsvector('simple', COALESCE(p.short_description, '')), 'B') ||
+           setweight(to_tsvector('simple', COALESCE(p.long_description, '')), 'C'),
+           plainto_tsquery('simple', $1)
+         ) AS relevance_score
+       FROM products p
+       JOIN domains d ON d.id = p.domain_id
+       WHERE p.status = 'published'
+         AND (
+           setweight(to_tsvector('simple', COALESCE(p.title, '')), 'A') ||
+           setweight(to_tsvector('simple', COALESCE(p.short_description, '')), 'B') ||
+           setweight(to_tsvector('simple', COALESCE(p.long_description, '')), 'C')
+         ) @@ plainto_tsquery('simple', $1)
+       ORDER BY relevance_score DESC, p.created_at DESC
+       LIMIT 10`,
+      [normalized]
+    )
 
-  return NextResponse.json({
-    mode: 'semantic',
-    query: q,
-    hits: [
-      {
-        id: 'mock-1',
-        title: 'Introduction to AI and Machine Learning',
-        relevance_score: 0.92,
-        slug: 'intro-to-ai',
-        domain: 'ai',
-        type: 'course',
-      },
-      {
-        id: 'mock-2',
-        title: 'Deep Learning Workshop',
-        relevance_score: 0.85,
-        slug: 'deep-learning-workshop',
-        domain: 'ai',
-        type: 'workshop',
-      }
-    ],
-    message: 'This is a mocked semantic search response. Implement pgvector or Pinecone in production.'
-  })
+    const hits = rows.map((row) => ({
+      ...row,
+      relevance_score: Number(row.relevance_score) || 0,
+    }))
+
+    return NextResponse.json({
+      mode: 'semantic',
+      query: normalized,
+      hits,
+      message: 'Semantic search is powered by weighted Postgres full-text ranking.',
+    })
+  } catch (error) {
+    console.error('[SemanticSearch] Error:', error)
+    return NextResponse.json({ error: 'Semantic search failed', hits: [] }, { status: 500 })
+  }
 }

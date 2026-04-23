@@ -280,6 +280,16 @@ Verification note (2026-04-23):
 
 ### Wave 3 — Platform Maturity
 
+Status: Completed
+
+Verification note (2026-04-23):
+- Domain content is now Payload-driven with DB-backed stats and safe fallback content in [app/(public)/[domain]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/page.tsx:1).
+- Moodle sync is queue-led by default for enrollment and refund paths in [app/api/payment/webhook/route.ts](/home/itb09/Desktop/projects/nstc/app/api/payment/webhook/route.ts:1) and [app/api/payment/create-order/route.ts](/home/itb09/Desktop/projects/nstc/app/api/payment/create-order/route.ts:1), using [lib/queues/moodle-sync.queue.ts](/home/itb09/Desktop/projects/nstc/lib/queues/moodle-sync.queue.ts:1).
+- Invoice PDF upload now stores files to S3/R2 with local fallback through [services/invoiceStorage.service.ts](/home/itb09/Desktop/projects/nstc/services/invoiceStorage.service.ts:1) and updates invoice URLs from both paid and free flows.
+- Mock semantic search has been replaced with weighted Postgres full-text ranking in [app/api/search/semantic/route.ts](/home/itb09/Desktop/projects/nstc/app/api/search/semantic/route.ts:1).
+- Search indexing is now wired to product lifecycle hooks (after change/delete) in [payload/collections/Products.ts](/home/itb09/Desktop/projects/nstc/payload/collections/Products.ts:1).
+- Local verification passed on 2026-04-23 via `npm run typecheck` and `npm run build` (exit code `0`), with known sandbox warnings for Postgres access during static generation.
+
 1. Shift marketing and domain content to Payload-driven content models.
 2. Queue Moodle sync by default.
 3. Complete invoice storage upload.

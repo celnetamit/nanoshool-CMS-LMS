@@ -3,9 +3,10 @@ import { auth } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
 import { createPaymentOrder, createFreePayment } from '@/services/payment.service'
 import { validateCoupon, applyDiscount, useCoupon } from '@/services/coupon.service'
-import { createEnrollment, markMoodleEnrolled } from '@/services/enrollment.service'
+import { createEnrollment } from '@/services/enrollment.service'
 import { createInvoice, generateInvoicePdf, linkInvoiceToEnrollment, updateInvoicePdf } from '@/services/invoice.service'
-import { syncUserEnrollment } from '@/services/moodle.service'
+import { storeInvoicePdf } from '@/services/invoiceStorage.service'
+import { enqueueMoodleSync } from '@/lib/queues/moodle-sync.queue'
 import { sendEnrollmentConfirmation } from '@/services/email.service'
 import { z } from 'zod'
 
@@ -122,23 +123,23 @@ export async function POST(req: NextRequest) {
       currency: 'INR',
       razorpayPaymentId: 'FREE-ENROLLMENT',
       issuedAt: new Date(),
-    }).then(async () => {
-      const pdfUrl = `/invoices/${invoice.id}.pdf` // placeholder until storage upload is wired
+    }).then(async (pdfBuffer) => {
+      const pdfUrl = await storeInvoicePdf(invoice.id, pdfBuffer)
       await updateInvoicePdf(invoice.id, pdfUrl)
     }).catch((error) => {
       console.error('[Free Enrollment] Invoice generation failed:', error)
     })
 
     if (product.moodle_course_id && session.user.email) {
-      syncUserEnrollment({
+      enqueueMoodleSync({
+        type: 'enroll-user',
+        enrollmentId: enrollment.id,
         userId: session.user.id,
         userEmail: session.user.email,
         userName: session.user.name ?? 'Learner',
         moodleCourseId: product.moodle_course_id,
-      }).then(async () => {
-        await markMoodleEnrolled(enrollment.id)
       }).catch((error) => {
-        console.error('[Free Enrollment] Moodle sync failed:', error)
+        console.error('[Free Enrollment] Failed to enqueue Moodle sync:', error)
       })
     }
 

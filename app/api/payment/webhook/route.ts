@@ -3,9 +3,10 @@ import crypto from 'crypto'
 import { queryOne } from '@/lib/db'
 import { confirmPayment, markPaymentFailed, markPaymentRefunded } from '@/services/payment.service'
 import { useCoupon } from '@/services/coupon.service'
-import { createEnrollment, revokeAccess, markMoodleEnrolled } from '@/services/enrollment.service'
+import { createEnrollment, revokeAccess } from '@/services/enrollment.service'
 import { createInvoice, generateInvoicePdf, updateInvoicePdf, linkInvoiceToEnrollment } from '@/services/invoice.service'
-import { syncUserEnrollment } from '@/services/moodle.service'
+import { storeInvoicePdf } from '@/services/invoiceStorage.service'
+import { enqueueMoodleSync } from '@/lib/queues/moodle-sync.queue'
 import { sendEnrollmentConfirmation, sendPaymentFailedEmail, sendRefundEmail } from '@/services/email.service'
 
 // ─── HMAC Signature Verification ──────────────────────────
@@ -137,28 +138,21 @@ async function processWebhookEvent(
       razorpayPaymentId,
       issuedAt: new Date(),
     }).then(async (pdfBuffer) => {
-      // TODO: Upload pdfBuffer to S3 and get URL
-      const pdfUrl = `/invoices/${invoice.id}.pdf` // placeholder
+      const pdfUrl = await storeInvoicePdf(invoice.id, pdfBuffer)
       await updateInvoicePdf(invoice.id, pdfUrl)
     }).catch(console.error)
 
-    // ─── Moodle sync (non-blocking, retriable) ────
+    // ─── Moodle sync via queue (non-blocking, retriable) ─
     if (product?.moodle_course_id && user) {
-      syncUserEnrollment({
+      enqueueMoodleSync({
+        type: 'enroll-user',
+        enrollmentId: enrollment.id,
         userId,
         userEmail: user.email,
         userName: user.name,
         moodleCourseId: product.moodle_course_id,
-      }).then(async (moodleUserId) => {
-        await markMoodleEnrolled(enrollment.id)
-        // Store moodle user ID
-        await queryOne(
-          'UPDATE users SET moodle_user_id = $1 WHERE id = $2',
-          [String(moodleUserId), userId]
-        )
       }).catch((err) => {
-        console.error('[Webhook] Moodle sync failed:', err)
-        // TODO: Add to retry queue (BullMQ)
+        console.error('[Webhook] Failed to enqueue Moodle sync job:', err)
       })
     }
 
@@ -224,9 +218,23 @@ async function processWebhookEvent(
       const user = await queryOne<{ name: string; email: string }>(
         'SELECT name, email FROM users WHERE id = $1', [enrollment.user_id]
       )
-      const product = await queryOne<{ title: string }>(
-        'SELECT title FROM products WHERE id = $1', [enrollment.product_id]
+      const product = await queryOne<{ title: string; moodle_course_id: string | null }>(
+        'SELECT title, moodle_course_id FROM products WHERE id = $1', [enrollment.product_id]
       )
+      const moodleUser = await queryOne<{ moodle_user_id: string | null }>(
+        'SELECT moodle_user_id FROM users WHERE id = $1',
+        [enrollment.user_id]
+      )
+
+      if (moodleUser?.moodle_user_id && product?.moodle_course_id) {
+        enqueueMoodleSync({
+          type: 'unenroll-user',
+          moodleUserId: Number(moodleUser.moodle_user_id),
+          moodleCourseId: product.moodle_course_id,
+        }).catch((err) => {
+          console.error('[Webhook] Failed to enqueue Moodle unenroll job:', err)
+        })
+      }
 
       if (user && product) {
         sendRefundEmail({

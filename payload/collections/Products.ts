@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { indexProduct, removeProductFromIndex } from '@/lib/search'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -189,11 +190,53 @@ export const Products: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      async ({ doc, req }) => {
-        // Trigger search re-indexing on publish
-        if (doc.status === 'published') {
-          // Search indexing will be handled by search service
-          console.log(`[Search] Re-indexing product: ${doc.title}`)
+      async ({ doc }) => {
+        try {
+          if (doc.status === 'published') {
+            const domainSlug =
+              typeof doc.domain === 'object' && doc.domain !== null
+                ? doc.domain.slug
+                : undefined
+
+            if (!domainSlug) {
+              console.warn(`[Search] Skipping indexing: missing domain slug for product ${doc.id}`)
+              return
+            }
+
+            await indexProduct({
+              id: doc.id,
+              title: doc.title,
+              slug: doc.slug,
+              shortDescription: doc.shortDescription,
+              longDescription: '',
+              domain: domainSlug,
+              type: doc.type,
+              price: Number(doc.price || 0),
+              salePrice: doc.salePrice ?? undefined,
+              level: doc.level ?? undefined,
+              certificate: Boolean(doc.certificate),
+              status: doc.status,
+            })
+            console.log(`[Search] Indexed product: ${doc.title}`)
+            return
+          }
+
+          await removeProductFromIndex(doc.id)
+          console.log(`[Search] Removed non-published product from index: ${doc.id}`)
+        } catch (error) {
+          console.error('[Search] Product indexing hook failed:', error)
+        }
+      },
+    ],
+    afterDelete: [
+      async ({ id }) => {
+        try {
+          if (typeof id === 'string') {
+            await removeProductFromIndex(id)
+            console.log(`[Search] Removed deleted product from index: ${id}`)
+          }
+        } catch (error) {
+          console.error('[Search] Product delete hook failed:', error)
         }
       },
     ],

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getPayload } from 'payload'
+import { queryOne } from '@/lib/db'
+import config from '@/payload.config'
 import styles from './domain.module.css'
 
 const DOMAIN_DATA: Record<string, {
@@ -71,13 +74,81 @@ const AUDIENCE_STRIP = [
 
 type Props = { params: Promise<{ domain: string }> }
 
+type PayloadDomainDoc = {
+  id: string
+  name: string
+  slug: string
+  tagline?: string | null
+  overview?: unknown
+  faqs?: { question?: string | null; answer?: unknown }[] | null
+  seo?: { title?: string | null; description?: string | null } | null
+}
+
+function extractPlainText(value: unknown): string {
+  const chunks: string[] = []
+
+  const visit = (node: unknown) => {
+    if (!node) return
+    if (typeof node === 'string') {
+      const text = node.trim()
+      if (text) chunks.push(text)
+      return
+    }
+    if (Array.isArray(node)) {
+      node.forEach(visit)
+      return
+    }
+    if (typeof node === 'object') {
+      const record = node as Record<string, unknown>
+      if (typeof record.text === 'string') {
+        const text = record.text.trim()
+        if (text) chunks.push(text)
+      }
+      if (record.children) visit(record.children)
+      if (record.root) visit(record.root)
+      if (record.content) visit(record.content)
+    }
+  }
+
+  visit(value)
+  return chunks.join(' ').replace(/\s+/g, ' ').trim()
+}
+
+async function getPayloadDomain(slug: string): Promise<PayloadDomainDoc | null> {
+  try {
+    const payload = await getPayload({ config })
+    const result = await payload.find({
+      collection: 'domains',
+      where: {
+        slug: { equals: slug },
+        status: { equals: 'published' },
+      },
+      depth: 1,
+      limit: 1,
+    })
+    return (result.docs[0] as PayloadDomainDoc | undefined) ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { domain } = await params
-  const data = DOMAIN_DATA[domain]
-  if (!data) return {}
+  const fallback = DOMAIN_DATA[domain]
+  if (!fallback) return {}
+
+  const payloadDomain = await getPayloadDomain(domain)
+  const description =
+    payloadDomain?.seo?.description ||
+    extractPlainText(payloadDomain?.overview) ||
+    fallback.description
+  const title =
+    payloadDomain?.seo?.title ||
+    `${payloadDomain?.name || fallback.name} Courses, Programs & Internships`
+
   return {
-    title: `${data.name} Courses, Programs & Internships`,
-    description: data.description,
+    title,
+    description,
   }
 }
 
@@ -87,8 +158,68 @@ export function generateStaticParams() {
 
 export default async function DomainPage({ params }: Props) {
   const { domain } = await params
-  const data = DOMAIN_DATA[domain]
-  if (!data) notFound()
+  const fallback = DOMAIN_DATA[domain]
+  if (!fallback) notFound()
+
+  const payloadDomain = await getPayloadDomain(domain)
+  const data = {
+    ...fallback,
+    name: payloadDomain?.name || fallback.name,
+    tagline: payloadDomain?.tagline || fallback.tagline,
+    description: extractPlainText(payloadDomain?.overview) || fallback.description,
+    faqs:
+      payloadDomain?.faqs
+        ?.map((item) => ({
+          q: item.question?.trim() || '',
+          a: extractPlainText(item.answer),
+        }))
+        .filter((item) => item.q && item.a) || fallback.faqs,
+  }
+
+  try {
+    const stats = await queryOne<{
+      programs: string
+      mentors: string
+      learners: string
+      completion_rate: string
+    }>(
+      `SELECT
+         (SELECT COUNT(*)
+          FROM products p
+          JOIN domains d ON d.id = p.domain_id
+          WHERE d.slug = $1 AND p.status = 'published')::text AS programs,
+         (SELECT COUNT(DISTINCT pm.user_id)
+          FROM product_mentors pm
+          JOIN products p ON p.id = pm.product_id
+          JOIN domains d ON d.id = p.domain_id
+          WHERE d.slug = $1)::text AS mentors,
+         (SELECT COUNT(*)
+          FROM enrollments e
+          JOIN products p ON p.id = e.product_id
+          JOIN domains d ON d.id = p.domain_id
+          WHERE d.slug = $1 AND e.access_status IN ('active', 'completed'))::text AS learners,
+         (SELECT CASE
+             WHEN COUNT(*) = 0 THEN 0
+             ELSE ROUND(100.0 * SUM(CASE WHEN e.access_status = 'completed' THEN 1 ELSE 0 END) / COUNT(*))
+           END
+          FROM enrollments e
+          JOIN products p ON p.id = e.product_id
+          JOIN domains d ON d.id = p.domain_id
+          WHERE d.slug = $1)::text AS completion_rate`,
+      [domain]
+    )
+
+    if (stats) {
+      data.stats = [
+        { value: `${stats.programs}+`, label: 'Programs' },
+        { value: `${stats.mentors}+`, label: 'Mentors' },
+        { value: `${stats.learners}+`, label: 'Learners' },
+        { value: `${stats.completion_rate || '0'}%`, label: 'Completion Rate' },
+      ]
+    }
+  } catch {
+    // Keep fallback stats when DB metrics are unavailable
+  }
 
   return (
     <div>
