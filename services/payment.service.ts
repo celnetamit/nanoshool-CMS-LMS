@@ -59,6 +59,26 @@ export async function createPaymentOrder({
   }
 }
 
+// ─── Create zero-amount payment record (free enrollments) ─
+export async function createFreePayment({
+  userId,
+  amount = 0,
+  currency = 'INR',
+}: {
+  userId: string
+  amount?: number
+  currency?: string
+}): Promise<DBPayment> {
+  const [payment] = await query<DBPayment>(
+    `INSERT INTO payments (user_id, amount, currency, status)
+     VALUES ($1, $2, $3, 'paid')
+     RETURNING *`,
+    [userId, amount, currency]
+  )
+
+  return payment
+}
+
 // ─── Check idempotency — has this payment been processed? ──
 export async function isPaymentProcessed(razorpayPaymentId: string): Promise<boolean> {
   const payment = await queryOne<{ status: string }>(

@@ -15,11 +15,13 @@ export async function createEnrollment({
   productId,
   paymentId,
   razorpayPaymentId,
+  paymentStatus = 'paid',
 }: {
   userId: string
   productId: string
-  paymentId: string
-  razorpayPaymentId: string
+  paymentId?: string | null
+  razorpayPaymentId?: string | null
+  paymentStatus?: PaymentStatus
 }): Promise<DBEnrollment> {
   // Check if enrollment already exists (idempotency)
   const existing = await queryOne<DBEnrollment>(
@@ -34,12 +36,13 @@ export async function createEnrollment({
     // Update to active
     const [updated] = await query<DBEnrollment>(
       `UPDATE enrollments
-       SET payment_status = 'paid', access_status = 'active',
-           payment_id = $1, razorpay_payment_id = $2, updated_at = NOW()
-       WHERE id = $3
+       SET payment_status = $1, access_status = 'active',
+           payment_id = $2, razorpay_payment_id = $3, updated_at = NOW()
+       WHERE id = $4
        RETURNING *`,
-      [paymentId, razorpayPaymentId, existing.id]
+      [paymentStatus, paymentId ?? null, razorpayPaymentId ?? null, existing.id]
     )
+    await redis.del(`enrollments:user:${userId}`)
     return updated
   }
 
@@ -47,9 +50,9 @@ export async function createEnrollment({
   const [enrollment] = await query<DBEnrollment>(
     `INSERT INTO enrollments
        (user_id, product_id, payment_id, payment_status, access_status, razorpay_payment_id)
-     VALUES ($1, $2, $3, 'paid', 'active', $4)
+     VALUES ($1, $2, $3, $4, 'active', $5)
      RETURNING *`,
-    [userId, productId, paymentId, razorpayPaymentId]
+    [userId, productId, paymentId ?? null, paymentStatus, razorpayPaymentId ?? null]
   )
 
   // Invalidate user enrollments cache
