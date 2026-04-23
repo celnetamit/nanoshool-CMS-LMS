@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { queryOne } from '@/lib/db'
 import { confirmPayment, markPaymentFailed, markPaymentRefunded } from '@/services/payment.service'
+import { useCoupon } from '@/services/coupon.service'
 import { createEnrollment, revokeAccess, markMoodleEnrolled } from '@/services/enrollment.service'
 import { createInvoice, generateInvoicePdf, updateInvoicePdf, linkInvoiceToEnrollment } from '@/services/invoice.service'
 import { syncUserEnrollment } from '@/services/moodle.service'
@@ -9,7 +10,10 @@ import { sendEnrollmentConfirmation, sendPaymentFailedEmail, sendRefundEmail } f
 
 // ─── HMAC Signature Verification ──────────────────────────
 function verifyWebhookSignature(body: string, signature: string): boolean {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET!
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  if (!secret) {
+    throw new Error('[Webhook] RAZORPAY_WEBHOOK_SECRET is not configured.')
+  }
   const expectedSig = crypto
     .createHmac('sha256', secret)
     .update(body)
@@ -43,11 +47,12 @@ export async function POST(req: NextRequest) {
 
   const { event } = payload
 
-  // ─── Always return 200 quickly, process async ───
-  // (Razorpay retries if we don't return 200 fast enough)
-  processWebhookEvent(event, payload.payload).catch((err) => {
-    console.error(`[Webhook] Processing error for event ${event}:`, err)
-  })
+  try {
+    await processWebhookEvent(event, payload.payload)
+  } catch (error) {
+    console.error(`[Webhook] Processing error for event ${event}:`, error)
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+  }
 
   return NextResponse.json({ received: true })
 }
@@ -67,6 +72,7 @@ async function processWebhookEvent(
     const { id: razorpayPaymentId, order_id: razorpayOrderId, amount, notes } = payment
     const userId = notes?.userId
     const productId = notes?.productId
+    const couponId = notes?.couponId
 
     if (!userId || !productId) {
       console.error('[Webhook] Missing userId or productId in payment notes')
@@ -88,6 +94,10 @@ async function processWebhookEvent(
     if (!confirmedPayment) {
       console.error(`[Webhook] Payment record not found for order: ${razorpayOrderId}`)
       return
+    }
+
+    if (couponId) {
+      await useCoupon(couponId)
     }
 
     // ─── Create enrollment ────────────────────────

@@ -3,12 +3,21 @@
  * Every function is safe to retry (idempotent).
  */
 
-const MOODLE_BASE = process.env.MOODLE_BASE_URL!
-const MOODLE_TOKEN = process.env.MOODLE_API_TOKEN!
+function getMoodleConfig() {
+  const base = process.env.MOODLE_BASE_URL
+  const token = process.env.MOODLE_API_TOKEN
+
+  if (!base || !token) {
+    throw new Error('[Moodle] Moodle is not configured. Set MOODLE_BASE_URL and MOODLE_API_TOKEN.')
+  }
+
+  return { base, token }
+}
 
 async function moodleCall<T>(wsfunction: string, params: Record<string, unknown>): Promise<T> {
-  const url = new URL(`${MOODLE_BASE}/webservice/rest/server.php`)
-  url.searchParams.set('wstoken', MOODLE_TOKEN)
+  const { base, token } = getMoodleConfig()
+  const url = new URL(`${base}/webservice/rest/server.php`)
+  url.searchParams.set('wstoken', token)
   url.searchParams.set('wsfunction', wsfunction)
   url.searchParams.set('moodlewsrestformat', 'json')
 

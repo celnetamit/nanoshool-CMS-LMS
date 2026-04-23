@@ -7,6 +7,14 @@ import styles from './listing.module.css'
 import type { DBProduct, ProductType } from '@/types'
 
 const VALID_DOMAINS = ['ai', 'biotechnology', 'nanotechnology']
+const AUDIENCE_LABELS: Record<string, string> = {
+  enterprise: 'Enterprise',
+  university: 'University',
+  students: 'Students',
+  'phd-professors': 'PhD & Professors',
+  'hiring-partners': 'Hiring Partners',
+  mentors: 'Mentors',
+}
 const TYPE_MAP: Record<string, ProductType> = {
   courses: 'course', workshops: 'workshop', internships: 'internship',
   'flagship-programs': 'flagship_program', packages: 'package',
@@ -20,6 +28,14 @@ type Props = { params: Promise<{ domain: string; type: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { domain, type } = await params
+  if (AUDIENCE_LABELS[type]) {
+    const audience = AUDIENCE_LABELS[type]
+    return {
+      title: `${audience} Programs in ${domain.charAt(0).toUpperCase() + domain.slice(1)}`,
+      description: `Explore NSTC offerings for ${audience.toLowerCase()} in ${domain}.`,
+    }
+  }
+
   const label = TYPE_LABELS[type] || type
   return {
     title: `${label} in ${domain.charAt(0).toUpperCase() + domain.slice(1)}`,
@@ -29,7 +45,46 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductListingPage({ params }: Props) {
   const { domain, type } = await params
-  if (!VALID_DOMAINS.includes(domain) || !TYPE_MAP[type]) notFound()
+  if (!VALID_DOMAINS.includes(domain)) notFound()
+  if (!TYPE_MAP[type] && !AUDIENCE_LABELS[type]) notFound()
+
+  const domainLabel = domain.charAt(0).toUpperCase() + domain.slice(1)
+
+  if (AUDIENCE_LABELS[type]) {
+    const audience = AUDIENCE_LABELS[type]
+    return (
+      <div>
+        <section className={styles.header}>
+          <div className="container">
+            <nav className={styles.breadcrumb}>
+              <Link href="/">Home</Link> <span>/</span>
+              <Link href={`/${domain}`}>{domainLabel}</Link>
+              <span>/</span> <span>{audience}</span>
+            </nav>
+            <h1 className={styles.title}>{audience} in {domainLabel}</h1>
+            <p className={styles.subtitle}>
+              Tailored pathways, outcomes, and support for {audience.toLowerCase()} in {domainLabel}.
+            </p>
+          </div>
+        </section>
+
+        <div className="container" style={{ paddingBottom: '4rem' }}>
+          <div className="card" style={{ padding: '2rem' }}>
+            <h2 style={{ marginBottom: '1rem' }}>Audience-Specific Programs</h2>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
+              We are preparing curated {audience.toLowerCase()} tracks in {domainLabel}. Start with our core catalog while we
+              finalize this dedicated track.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <Link href={`/${domain}/courses`} className="btn btn-primary">View Courses</Link>
+              <Link href={`/${domain}/workshops`} className="btn btn-secondary">View Workshops</Link>
+              <Link href={`/${domain}`} className="btn btn-ghost">Back to {domainLabel}</Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const productType = TYPE_MAP[type]
   const label = TYPE_LABELS[type]
@@ -56,10 +111,10 @@ export default async function ProductListingPage({ params }: Props) {
         <div className="container">
           <nav className={styles.breadcrumb}>
             <Link href="/">Home</Link> <span>/</span>
-            <Link href={`/${domain}`}>{domain.charAt(0).toUpperCase() + domain.slice(1)}</Link>
+            <Link href={`/${domain}`}>{domainLabel}</Link>
             <span>/</span> <span>{label}</span>
           </nav>
-          <h1 className={styles.title}>{label} in {domain.charAt(0).toUpperCase() + domain.slice(1)}</h1>
+          <h1 className={styles.title}>{label} in {domainLabel}</h1>
           <p className={styles.subtitle}>{products.length} program{products.length !== 1 ? 's' : ''} available</p>
         </div>
       </section>
@@ -146,7 +201,7 @@ export default async function ProductListingPage({ params }: Props) {
                 <h3>No {label} yet</h3>
                 <p>Programs are being added. Check back soon or explore other formats.</p>
                 <Link href={`/${domain}`} className="btn btn-secondary">
-                  ← Back to {domain.charAt(0).toUpperCase() + domain.slice(1)}
+                  ← Back to {domainLabel}
                 </Link>
               </div>
             )}

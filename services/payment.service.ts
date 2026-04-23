@@ -5,10 +5,17 @@ import type { DBPayment } from '@/types'
 // Lazy-init: avoid constructor throwing during Next.js build when env vars aren't set
 let _razorpay: Razorpay | null = null
 function getRazorpay(): Razorpay {
+  const keyId = process.env.RAZORPAY_KEY_ID
+  const keySecret = process.env.RAZORPAY_KEY_SECRET
+
+  if (!keyId || !keySecret) {
+    throw new Error('[Payments] Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.')
+  }
+
   if (!_razorpay) {
     _razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID!,
-      key_secret: process.env.RAZORPAY_KEY_SECRET!,
+      key_id: keyId,
+      key_secret: keySecret,
     })
   }
   return _razorpay
@@ -47,7 +54,7 @@ export async function createPaymentOrder({
     orderId: order.id,
     amount: order.amount as number,
     currency: order.currency,
-    keyId: process.env.RAZORPAY_KEY_ID!,
+    keyId: process.env.RAZORPAY_KEY_ID || '',
     paymentId: payment.id,
   }
 }

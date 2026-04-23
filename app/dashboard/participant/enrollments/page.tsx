@@ -3,6 +3,8 @@ import { getUserEnrollments, type EnrollmentWithProduct } from '@/services/enrol
 import Link from 'next/link'
 import styles from './enrollments.module.css'
 
+const moodleBaseUrl = process.env.NEXT_PUBLIC_MOODLE_URL
+
 const TYPE_LABELS: Record<string, string> = {
   course: 'Course', workshop: 'Workshop', internship: 'Internship',
   flagship_program: 'Flagship Program', package: 'Package',
@@ -59,14 +61,18 @@ export default async function EnrollmentsPage() {
 
               <div className={styles.cardFooter}>
                 {e.access_status === 'active' || e.access_status === 'completed' ? (
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_MOODLE_URL}/course`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary btn--sm"
-                  >
-                    Open in Moodle →
-                  </a>
+                  moodleBaseUrl ? (
+                    <a
+                      href={`${moodleBaseUrl}/course`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn--sm"
+                    >
+                      Open in Moodle →
+                    </a>
+                  ) : (
+                    <span className={styles.pendingNote}>Moodle link not configured yet</span>
+                  )
                 ) : (
                   <span className={styles.pendingNote}>Access pending payment confirmation</span>
                 )}

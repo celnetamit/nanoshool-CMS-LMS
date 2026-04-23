@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
 import { createPaymentOrder } from '@/services/payment.service'
-import { validateCoupon, applyDiscount, useCoupon } from '@/services/coupon.service'
+import { validateCoupon, applyDiscount } from '@/services/coupon.service'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
   // ─── Calculate amount ───────────────────────────
   let baseAmount = Number(product.sale_price ?? product.price)
   let couponApplied: { code: string; discount: number } | undefined
+  let couponId: string | undefined
 
   // Apply coupon if provided
   if (couponCode) {
@@ -55,9 +56,8 @@ export async function POST(req: NextRequest) {
       code: result.coupon.code,
       discount: baseAmount - discountedAmount,
     }
+    couponId = result.coupon.id
     baseAmount = discountedAmount
-    // Record usage (will be committed only if payment proceeds)
-    await useCoupon(result.coupon.id)
   }
 
   // Handle free products
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       productId,
       productTitle: product.title,
+      ...(couponId ? { couponId } : {}),
     },
   })
 

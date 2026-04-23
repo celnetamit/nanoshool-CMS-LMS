@@ -1,7 +1,16 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.EMAIL_FROM || 'noreply@nstc.in'
+
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY || process.env.SMTP_PASS
+
+  if (!apiKey) {
+    throw new Error('[Email] Resend is not configured. Set RESEND_API_KEY or SMTP_PASS.')
+  }
+
+  return new Resend(apiKey)
+}
 
 // ─── Enrollment Confirmation ───────────────────────────────
 export async function sendEnrollmentConfirmation({
@@ -17,7 +26,7 @@ export async function sendEnrollmentConfirmation({
   invoicePdfUrl?: string
   moodleAccessUrl?: string
 }): Promise<void> {
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: FROM,
     to,
     subject: `You're enrolled: ${productTitle} — NSTC`,
@@ -59,7 +68,7 @@ export async function sendPaymentFailedEmail({
   userName: string
   productTitle: string
 }): Promise<void> {
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: FROM,
     to,
     subject: `Payment failed for ${productTitle} — NSTC`,
@@ -87,7 +96,7 @@ export async function sendRefundEmail({
   amount: number
   currency: string
 }): Promise<void> {
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: FROM,
     to,
     subject: `Refund processed for ${productTitle} — NSTC`,

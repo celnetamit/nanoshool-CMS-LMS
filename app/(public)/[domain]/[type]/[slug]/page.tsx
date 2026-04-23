@@ -149,7 +149,7 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
 
               {/* CTA */}
-              <Link href={`/api/enroll?productId=${product.id}`} className={`btn btn-primary ${styles.enrollBtn}`}>
+              <Link href={`/checkout?productId=${product.id}`} className={`btn btn-primary ${styles.enrollBtn}`}>
                 Enroll Now →
               </Link>
               <p className={styles.enrollNote}>30-day money-back guarantee</p>
@@ -185,7 +185,7 @@ export default async function ProductDetailPage({ params }: Props) {
           </span>
           {hasDiscount && <span className={styles.mobileDiscount}>{discountPct}% off</span>}
         </div>
-        <Link href={`/api/enroll?productId=${product.id}`} className="btn btn-primary">
+        <Link href={`/checkout?productId=${product.id}`} className="btn btn-primary">
           Enroll Now →
         </Link>
       </div>
