@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 import { DASHBOARD_ROOT_BY_ROLE } from '@/types/routes'
 import type { UserRole } from '@/types'
+import { auth } from '@/lib/auth'
 
 // Route → required role
 const PROTECTED_ROUTES: Record<string, UserRole[]> = {
@@ -12,14 +11,14 @@ const PROTECTED_ROUTES: Record<string, UserRole[]> = {
   '/dashboard/participant': ['admin', 'participant'],
 }
 
-export default async function middleware(req: NextRequest) {
+export default auth((req) => {
   const { pathname } = req.nextUrl
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  const userRole = token?.role as UserRole | undefined
+  const session = req.auth
+  const userRole = session?.user?.role as UserRole | undefined
 
   // If user hits /dashboard, redirect to their role dashboard
   if (pathname === '/dashboard') {
-    if (!token) {
+    if (!session?.user) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
     const target = DASHBOARD_ROOT_BY_ROLE[userRole ?? 'participant'] ?? '/dashboard/participant'
@@ -29,7 +28,7 @@ export default async function middleware(req: NextRequest) {
   // Check protected dashboard routes
   for (const [route, allowedRoles] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname.startsWith(route)) {
-      if (!token) {
+      if (!session?.user) {
         const loginUrl = new URL('/login', req.url)
         loginUrl.searchParams.set('callbackUrl', pathname)
         return NextResponse.redirect(loginUrl)
@@ -43,7 +42,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next()
-}
+})
 
 export const config = {
   matcher: ['/dashboard/:path*', '/api/admin/:path*', '/api/enroll', '/api/enrollments/:path*'],
