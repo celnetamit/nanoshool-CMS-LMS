@@ -1,0 +1,153 @@
+.page { padding-bottom: 80px; }
+
+.breadcrumbRow { padding: 1.5rem 0 0; }
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-subtle);
+}
+.breadcrumb a:hover { color: var(--color-text); }
+
+/* ─── Layout ────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 3rem;
+  padding: 2rem 0 4rem;
+  align-items: start;
+}
+
+/* ─── Main Column ───────────────────────────────── */
+.mainCol { display: flex; flex-direction: column; gap: 2rem; }
+
+.hero { display: flex; flex-direction: column; gap: 1rem; }
+.heroBadges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.title { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+.shortDesc { font-size: 1.0625rem; color: var(--color-text-muted); line-height: 1.7; }
+.metaRow { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9375rem; color: var(--color-text-muted); }
+
+/* ─── Tabs ──────────────────────────────────────── */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  gap: 0;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: var(--color-text); }
+.tabActive { color: var(--color-text) !important; border-color: var(--color-primary) !important; }
+
+/* ─── Sections ──────────────────────────────────── */
+.section { display: flex; flex-direction: column; gap: 1rem; }
+.sectionTitle { font-size: 1.25rem; font-weight: 700; }
+.bodyText { font-size: 1rem; color: var(--color-text-muted); line-height: 1.8; }
+
+.outcomesList { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.outcomeItem { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9375rem; color: var(--color-text-muted); }
+.outcomeCheck { color: var(--color-success); font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+
+.curriculumPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+}
+.curriculumPlaceholder p { font-size: 0.9375rem; }
+
+/* ─── Enroll Card ───────────────────────────────── */
+.enrollCard {
+  position: sticky;
+  top: 90px;
+}
+
+.enrollCardInner {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pricing { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.discountBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34,197,94,0.12);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+
+.priceRow { display: flex; align-items: baseline; gap: 0.75rem; }
+.price { font-size: 2rem; font-weight: 800; }
+.strikePrice { font-size: 1rem; color: var(--color-text-subtle); text-decoration: line-through; }
+
+.enrollBtn { width: 100%; justify-content: center; font-size: 1.0625rem; padding: 0.875rem 1.5rem; }
+
+.enrollNote { text-align: center; font-size: 0.8125rem; color: var(--color-text-subtle); }
+
+.highlights { display: flex; flex-direction: column; gap: 0.5rem; }
+.highlight { font-size: 0.9375rem; color: var(--color-text-muted); padding: 0.375rem 0; border-bottom: 1px solid var(--color-border); }
+.highlight:last-child { border-bottom: none; }
+
+.divider { border: none; border-top: 1px solid var(--color-border); }
+
+.enterpriseLink { font-size: 0.875rem; color: var(--color-text-subtle); transition: color var(--transition-fast); text-align: center; }
+.enterpriseLink:hover { color: var(--color-primary-hover); }
+
+/* ─── Mobile CTA Bar ────────────────────────────── */
+.mobileCtaBar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(9,9,11,0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 1.5rem;
+  z-index: 50;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mobilePricing { display: flex; align-items: baseline; gap: 0.5rem; }
+.mobilePrice { font-size: 1.375rem; font-weight: 800; }
+.mobileDiscount { font-size: 0.875rem; color: var(--color-success); font-weight: 600; }
+
+.notFound { }
+
+/* ─── Responsive ────────────────────────────────── */
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; }
+  .enrollCard { display: none; }
+  .mobileCtaBar { display: flex; }
+  .page { padding-bottom: 90px; }
+}
+
+@media (max-width: 640px) {
+  .outcomesList { grid-template-columns: 1fr; }
+}

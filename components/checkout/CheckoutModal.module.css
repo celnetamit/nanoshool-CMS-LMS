@@ -1,0 +1,121 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.25s ease;
+}
+
+/* ─── Header ──────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title { font-size: 1.25rem; font-weight: 700; }
+
+.closeBtn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.closeBtn:hover { background: var(--color-bg-elevated); color: var(--color-text); }
+
+/* ─── Product ──────────────────────── */
+.productSummary {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+}
+
+.productIcon { font-size: 2rem; flex-shrink: 0; }
+.productInfo { display: flex; flex-direction: column; gap: 0.375rem; }
+.productTitle { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.productPricing { display: flex; align-items: baseline; gap: 0.5rem; }
+.originalPrice { font-size: 0.875rem; color: var(--color-text-subtle); text-decoration: line-through; }
+.currentPrice { font-size: 1.125rem; font-weight: 700; }
+
+.divider { border: none; border-top: 1px solid var(--color-border); }
+
+/* ─── Coupon ────────────────────────── */
+.couponSection { display: flex; flex-direction: column; gap: 0.625rem; }
+.couponLabel { font-size: 0.875rem; font-weight: 600; color: var(--color-text-muted); }
+.couponRow { display: flex; gap: 0.5rem; }
+.couponRow .input { flex: 1; letter-spacing: 0.08em; font-size: 0.9375rem; }
+.couponSuccess { font-size: 0.875rem; color: var(--color-success); font-weight: 500; }
+.couponError { font-size: 0.875rem; color: var(--color-error); }
+
+/* ─── Order Summary ─────────────────── */
+.orderSummary { display: flex; flex-direction: column; gap: 0.625rem; }
+
+.orderRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.discountRow { color: var(--color-success); }
+
+.totalRow {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text);
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ─── Error ──────────────────────────── */
+.error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #f87171;
+}
+
+/* ─── CTA ─────────────────────────────── */
+.payBtn {
+  width: 100%;
+  justify-content: center;
+  padding: 1rem;
+  font-size: 1.0625rem;
+}
+
+.guarantee {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-subtle);
+}
+
+@media (max-width: 480px) {
+  .modal { padding: 1.5rem; }
+}

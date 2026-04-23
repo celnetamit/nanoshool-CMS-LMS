@@ -1,0 +1,173 @@
+/*!***********************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[13].oneOf[5].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[13].oneOf[5].use[3]!./app/(public)/[domain]/domain.module.css ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************/
+.domain_hero__hehUM {
+  position: relative;
+  padding: 4rem 0 3rem;
+  overflow: hidden;
+}
+
+.domain_heroBg__0a_e7 {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, var(--domain-gradient), transparent);
+  pointer-events: none;
+}
+
+.domain_breadcrumb__mXrt0 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-subtle);
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.domain_breadcrumb__mXrt0 a:hover { color: var(--color-text); }
+
+.domain_heroContent__LOGD5 {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.domain_heroIcon__hrQ9y { font-size: 3rem; }
+.domain_heroTitle____yo6 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; }
+.domain_heroTagline__R26LQ { font-size: 1.25rem; color: var(--color-text-muted); font-weight: 500; }
+.domain_heroDesc__v3pb3 { font-size: 1rem; color: var(--color-text-muted); max-width: 560px; line-height: 1.7; }
+
+.domain_heroCtas__QkV6q { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+
+.domain_heroStats__9WFaR {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 3rem;
+  margin-top: 3rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.domain_heroStat__yWle4 { display: flex; flex-direction: column; gap: 0.25rem; }
+.domain_heroStatValue__XgftL { font-size: 2rem; font-weight: 800; }
+.domain_heroStatLabel__czMZm { font-size: 0.875rem; color: var(--color-text-subtle); }
+
+/* ─── Categories ─────────────────────────────────── */
+.domain_sectionTitle__PwzXc {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.domain_categoryGrid__7DC6T {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-gap: 1rem;
+  gap: 1rem;
+}
+
+.domain_categoryCard__mmj79 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.domain_categoryIcon__z7NFa { font-size: 1.5rem; flex-shrink: 0; }
+.domain_categoryLabel__OcDYq { font-size: 0.9375rem; font-weight: 600; }
+.domain_categoryDesc__bDZkZ { font-size: 0.8125rem; color: var(--color-text-subtle); margin-top: 0.15rem; }
+.domain_categoryArrow__GCZ0g { font-size: 1.25rem; font-weight: 700; margin-left: auto; flex-shrink: 0; }
+
+/* ─── Audience Strip ──────────────────────────────── */
+.domain_audienceSection__tQdcM {
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 1.5rem 0;
+}
+
+.domain_audienceLabel__UR_b7 {
+  font-size: 0.875rem;
+  color: var(--color-text-subtle);
+  margin-bottom: 1rem;
+}
+
+.domain_audienceStrip__GGKmX { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+.domain_audienceChip__Cmp8q {
+  padding: 0.5rem 1rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.domain_audienceChip__Cmp8q:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-light);
+}
+
+/* ─── FAQ ────────────────────────────────────────── */
+.domain_faq__llZ72 {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.domain_faqQuestion__MvJZo {
+  padding: 1.25rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background var(--transition-fast);
+}
+
+.domain_faqQuestion__MvJZo:hover { background: var(--color-bg-elevated); }
+.domain_faqQuestion__MvJZo::-webkit-details-marker { display: none; }
+.domain_faqQuestion__MvJZo::after { content: '+'; font-size: 1.25rem; font-weight: 300; color: var(--color-text-muted); }
+details[open] .domain_faqQuestion__MvJZo::after { content: '−'; }
+
+.domain_faqAnswer__VlQNU {
+  padding: 0 1.5rem 1.25rem;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+/* ─── CTA Banner ─────────────────────────────────── */
+.domain_ctaBanner___IIUn { padding: 4rem 0; }
+.domain_ctaInner__pYJAL {
+  border-radius: var(--radius-2xl);
+  border: 1px solid;
+  padding: 3.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.domain_ctaInner__pYJAL h2 { font-size: 2rem; font-weight: 700; }
+.domain_ctaInner__pYJAL p { color: var(--color-text-muted); }
+
+@media (max-width: 1024px) { .domain_categoryGrid__7DC6T { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+  .domain_categoryGrid__7DC6T { grid-template-columns: repeat(2, 1fr); }
+  .domain_categoryCard__mmj79 { flex-direction: column; text-align: center; }
+  .domain_categoryArrow__GCZ0g { display: none; }
+  .domain_heroStats__9WFaR { gap: 1.5rem; }
+}
+

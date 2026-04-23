@@ -1,0 +1,14 @@
+.refundBtn {
+  color: var(--color-error);
+  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(239,68,68,0.06);
+  transition: all var(--transition-fast);
+}
+
+.refundBtn:hover {
+  background: rgba(239,68,68,0.12);
+  border-color: var(--color-error);
+}
+
+.done { font-size: 0.8125rem; color: var(--color-success); font-weight: 500; }
+.error { font-size: 0.8125rem; color: var(--color-error); }

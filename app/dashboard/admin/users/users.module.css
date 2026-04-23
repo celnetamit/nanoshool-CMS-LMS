@@ -1,0 +1,60 @@
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.375rem; }
+.subtitle { color: var(--color-text-muted); }
+
+.tableCard { overflow: auto; }
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-bg-elevated);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-subtle);
+  min-width: 700px;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr;
+  padding: 0.875rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  align-items: center;
+  font-size: 0.875rem;
+  transition: background var(--transition-fast);
+  min-width: 700px;
+}
+
+.tableRow:hover { background: rgba(255,255,255,0.02); }
+
+.userCell { display: flex; align-items: center; gap: 0.625rem; }
+
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary-muted);
+  color: var(--color-primary-hover);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.userName { font-weight: 500; }
+.email { color: var(--color-text-muted); font-size: 0.875rem; }
+.count { font-weight: 600; }
+.moodleId { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--color-text-subtle); }
+.date { color: var(--color-text-subtle); }
+
+.empty { padding: 3rem; text-align: center; color: var(--color-text-muted); }

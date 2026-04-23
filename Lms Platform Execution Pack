@@ -1,0 +1,784 @@
+# LMS Platform Execution Pack
+
+## 1. ER Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ ENROLLMENTS : has
+    USERS ||--o{ PAYMENTS : makes
+    USERS ||--o{ INVOICES : owns
+    USERS ||--o{ CERTIFICATES : receives
+    USERS ||--o{ PRODUCT_MENTORS : may_be
+
+    DOMAINS ||--o{ PRODUCTS : categorizes
+    AUDIENCES ||--o{ PRODUCT_AUDIENCES : maps_to
+    PRODUCTS ||--o{ PRODUCT_AUDIENCES : tagged_for
+    PRODUCTS ||--o{ PRODUCT_MENTORS : assigned_to
+    PRODUCTS ||--o{ ENROLLMENTS : contains
+    PRODUCTS ||--o{ CERTIFICATES : awards
+    PAYMENTS ||--o| INVOICES : generates
+    PAYMENTS ||--o{ ENROLLMENTS : confirms
+
+    USERS {
+      uuid id PK
+      text name
+      text email UK
+      text password_hash
+      enum role
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    DOMAINS {
+      uuid id PK
+      text name
+      text slug UK
+      text description
+      timestamp created_at
+    }
+
+    AUDIENCES {
+      uuid id PK
+      text name
+      text slug UK
+    }
+
+    PRODUCTS {
+      uuid id PK
+      uuid domain_id FK
+      text title
+      text slug
+      enum type
+      text short_description
+      text long_description
+      numeric price
+      numeric sale_price
+      text duration
+      text level
+      boolean certificate
+      text moodle_course_id
+      enum status
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    PRODUCT_AUDIENCES {
+      uuid product_id FK
+      uuid audience_id FK
+    }
+
+    PRODUCT_MENTORS {
+      uuid product_id FK
+      uuid user_id FK
+    }
+
+    ENROLLMENTS {
+      uuid id PK
+      uuid user_id FK
+      uuid product_id FK
+      uuid payment_id FK
+      uuid invoice_id FK
+      enum payment_status
+      enum access_status
+      text razorpay_payment_id
+      boolean moodle_enrollment_status
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    PAYMENTS {
+      uuid id PK
+      uuid user_id FK
+      numeric amount
+      text currency
+      text razorpay_order_id
+      text razorpay_payment_id
+      enum status
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    INVOICES {
+      uuid id PK
+      uuid user_id FK
+      uuid payment_id FK
+      numeric amount
+      text status
+      text pdf_url
+      timestamp created_at
+      timestamp updated_at
+    }
+
+    CERTIFICATES {
+      uuid id PK
+      uuid user_id FK
+      uuid product_id FK
+      text certificate_url
+      timestamp issued_at
+    }
+
+    LEGAL_DOCUMENTS {
+      uuid id PK
+      text title
+      text slug
+      text content
+      text version
+      date effective_date
+    }
+```
+
+---
+
+## 2. OpenAPI Spec (v1)
+
+```yaml
+openapi: 3.1.0
+info:
+  title: LMS Platform API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+paths:
+  /api/auth/signup:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '201':
+          description: User created
+  /api/auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated
+  /api/auth/me:
+    get:
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+  /api/products:
+    get:
+      summary: List products
+      parameters:
+        - in: query
+          name: domain
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [course, workshop, internship, flagship_program, package]
+        - in: query
+          name: audience
+          schema:
+            type: string
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product list
+    post:
+      summary: Create product
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Product created
+  /api/products/{slug}:
+    get:
+      summary: Get product by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product detail
+  /api/enroll:
+    post:
+      summary: Start enrollment checkout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Razorpay order created
+  /api/enrollments/user:
+    get:
+      summary: Get current user enrollments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enrollment list
+  /api/payment/create-order:
+    post:
+      summary: Create Razorpay order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Order created
+  /api/payment/webhook:
+    post:
+      summary: Razorpay webhook endpoint
+      responses:
+        '200':
+          description: Event processed
+  /api/search:
+    get:
+      summary: Search across products, mentors, domains, and content
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: domain
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+```
+
+---
+
+## 3. Jira-Style Development Backlog
+
+### Epic 1 — Platform Foundation
+
+* FE-001 Initialize Next.js monorepo with App Router
+* BE-001 Configure PostgreSQL, Redis, environment management
+* CMS-001 Initialize Payload CMS and admin access
+* INF-001 Set up deployment pipelines for preview and production
+* SEC-001 Add auth, RBAC, route guards, middleware
+
+### Epic 2 — Information Architecture and Content
+
+* IA-001 Finalize route naming conventions
+* IA-002 Create public sitemap and navigation config
+* CMS-002 Build content types for domains, products, mentors, legal pages
+* CMS-003 Add SEO metadata fields and Open Graph fields
+* CMS-004 Add reusable page builder blocks for hero, CTA, FAQ, testimonials
+
+### Epic 3 — Public Website
+
+* FE-101 Build homepage
+* FE-102 Build audience landing pages
+* FE-103 Build domain landing pages
+* FE-104 Build product listing pages
+* FE-105 Build product detail pages
+* FE-106 Build mentor and partner pages
+* FE-107 Build legal pages
+* FE-108 Build search results page
+
+### Epic 4 — Commerce and Payments
+
+* BE-101 Create checkout service
+* BE-102 Integrate Razorpay order creation
+* BE-103 Build webhook verification and event processor
+* BE-104 Create payment and enrollment state machine
+* BE-105 Generate invoices and downloadable records
+* FE-201 Build checkout UI and payment states
+
+### Epic 5 — Moodle Integration
+
+* INT-001 Build Moodle API client
+* INT-002 Create user sync flow
+* INT-003 Create enrollment sync flow
+* INT-004 Sync completion and certificates
+* INT-005 Create retry queue for failed sync jobs
+
+### Epic 6 — Dashboards
+
+* FE-301 Participant dashboard home
+* FE-302 Participant enrollments, invoices, certificates
+* FE-303 Mentor assigned programs and learners
+* FE-304 Program manager cohorts and progress views
+* FE-305 Admin products, users, payments, enrollments
+
+### Epic 7 — Search and Discovery
+
+* SE-001 Configure Meilisearch or Typesense
+* SE-002 Index products, domains, mentors, legal pages
+* SE-003 Build faceted filters
+* SE-004 Add semantic search in v2
+* SE-005 Add related products and recommendations
+
+### Epic 8 — Quality and Analytics
+
+* QA-001 Add unit tests for services
+* QA-002 Add E2E flows for enroll, pay, access, refund
+* AN-001 Instrument events for page view, search, checkout, purchase
+* AN-002 Add conversion dashboards
+
+---
+
+## 4. Wireframe Notes
+
+### 4.1 Homepage
+
+* Header: logo, domains, audience links, search, CTA
+* Hero: headline, subheadline, primary CTA, secondary CTA
+* Featured domains: AI, Biotechnology, Nanotechnology
+* Featured products carousel
+* Outcomes section with metrics
+* Mentors spotlight
+* Testimonials
+* Partners logos
+* Footer with legal and support links
+
+### 4.2 Domain Page `/ai`
+
+* Hero with domain positioning
+* Category cards: courses, workshops, internships, flagship programs, packages
+* Audience strip: enterprise, university, students, PhD & professors
+* Featured mentors
+* Featured products grid
+* FAQ
+* CTA banner
+
+### 4.3 Product Listing Page `/ai/courses`
+
+* Left sidebar filters: price, level, format, certificate, mentor
+* Search input
+* Product cards grid
+* Sort options
+* Pagination or infinite load
+
+### 4.4 Product Detail Page
+
+* Product hero with title, subtitle, price, CTA
+* Tabs: overview, curriculum, mentor, FAQ, outcomes
+* Certificate section
+* Related programs
+* Sticky mobile CTA
+
+### 4.5 Participant Dashboard
+
+* Overview cards: active enrollments, completed, certificates, invoices
+* Continue learning section
+* Recent payments
+* Recommended programs
+
+### 4.6 Mentor Dashboard
+
+* Assigned programs list
+* Upcoming sessions
+* Learner progress snapshot
+* Feedback/review queue
+
+### 4.7 Program Manager Dashboard
+
+* Cohort list
+* Enrollment stats
+* Progress tables
+* Completion funnel
+* Intervention alerts
+
+### 4.8 Admin Dashboard
+
+* Revenue summary
+* Enrollment trends
+* Payment issue alerts
+* Product management table
+* User management table
+
+---
+
+## 5. SQL Migrations (Baseline)
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM ('admin','mentor','participant','program_manager');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE product_type AS ENUM ('course','workshop','internship','flagship_program','package');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE product_status AS ENUM ('draft','published','archived');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE payment_status AS ENUM ('pending','paid','failed','refunded');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE access_status AS ENUM ('locked','active','revoked','completed');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT,
+  role user_role NOT NULL DEFAULT 'participant',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS domains (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS audiences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  domain_id UUID NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  type product_type NOT NULL,
+  short_description TEXT,
+  long_description TEXT,
+  price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  sale_price NUMERIC(12,2),
+  duration TEXT,
+  level TEXT,
+  certificate BOOLEAN NOT NULL DEFAULT FALSE,
+  moodle_course_id TEXT,
+  status product_status NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(domain_id, type, slug)
+);
+
+CREATE TABLE IF NOT EXISTS product_audiences (
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  audience_id UUID NOT NULL REFERENCES audiences(id) ON DELETE CASCADE,
+  PRIMARY KEY (product_id, audience_id)
+);
+
+CREATE TABLE IF NOT EXISTS product_mentors (
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (product_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC(12,2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'INR',
+  razorpay_order_id TEXT UNIQUE,
+  razorpay_payment_id TEXT UNIQUE,
+  status payment_status NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  payment_id UUID UNIQUE REFERENCES payments(id) ON DELETE SET NULL,
+  amount NUMERIC(12,2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'issued',
+  pdf_url TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS enrollments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  payment_id UUID REFERENCES payments(id) ON DELETE SET NULL,
+  invoice_id UUID REFERENCES invoices(id) ON DELETE SET NULL,
+  payment_status payment_status NOT NULL DEFAULT 'pending',
+  access_status access_status NOT NULL DEFAULT 'locked',
+  razorpay_payment_id TEXT,
+  moodle_enrollment_status BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS certificates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  certificate_url TEXT NOT NULL,
+  issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, product_id)
+);
+
+CREATE TABLE IF NOT EXISTS legal_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  content TEXT NOT NULL,
+  version TEXT NOT NULL,
+  effective_date DATE NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_products_domain_id ON products(domain_id);
+CREATE INDEX IF NOT EXISTS idx_products_type ON products(type);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_enrollments_user_id ON enrollments(user_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_product_id ON enrollments(product_id);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+```
+
+---
+
+## 6. Suggested Code Folder Structure
+
+```txt
+/apps
+  /web
+    /app
+      /(public)
+        /page.tsx
+        /enterprise/page.tsx
+        /university/page.tsx
+        /students/page.tsx
+        /phd-professors/page.tsx
+        /hiring-partners/page.tsx
+        /join-us/page.tsx
+        /mentors/page.tsx
+        /partners/page.tsx
+        /legal
+          /page.tsx
+          /[slug]/page.tsx
+        /search/page.tsx
+        /[domain]
+          /page.tsx
+          /courses/page.tsx
+          /workshops/page.tsx
+          /internships/page.tsx
+          /flagship-programs/page.tsx
+          /packages/page.tsx
+          /enterprise/page.tsx
+          /university/page.tsx
+          /students/page.tsx
+          /phd-professors/page.tsx
+          /hiring-partners/page.tsx
+          /mentors/page.tsx
+          /course/[slug]/page.tsx
+          /workshop/[slug]/page.tsx
+          /internship/[slug]/page.tsx
+          /flagship-program/[slug]/page.tsx
+          /package/[slug]/page.tsx
+      /(dashboard)
+        /dashboard
+          /participant/page.tsx
+          /participant/enrollments/page.tsx
+          /participant/certificates/page.tsx
+          /participant/invoices/page.tsx
+          /mentor/page.tsx
+          /mentor/programs/page.tsx
+          /mentor/students/page.tsx
+          /program-manager/page.tsx
+          /program-manager/cohorts/page.tsx
+          /program-manager/progress/page.tsx
+          /admin/page.tsx
+          /admin/products/page.tsx
+          /admin/users/page.tsx
+          /admin/enrollments/page.tsx
+          /admin/payments/page.tsx
+      /api
+        /auth
+        /products
+        /enroll
+        /payment
+        /search
+    /components
+      /ui
+      /layout
+      /navigation
+      /domains
+      /products
+      /dashboard
+      /forms
+    /lib
+      /auth
+      /db
+      /rbac
+      /validation
+      /seo
+      /utils
+    /services
+      enrollment.service.ts
+      payment.service.ts
+      moodle.service.ts
+      search.service.ts
+      invoice.service.ts
+    /styles
+    /types
+  /cms
+    /payload.config.ts
+    /collections
+      Domains.ts
+      Products.ts
+      Mentors.ts
+      LegalDocuments.ts
+      Pages.ts
+    /globals
+      Navigation.ts
+      SiteSettings.ts
+/packages
+  /database
+  /ui
+  /config
+  /eslint-config
+  /typescript-config
+/infrastructure
+  /docker
+  /terraform
+/docs
+  /prd
+  /api
+  /architecture
+```
+
+---
+
+## 7. Execution Notes for AI Agents
+
+### Rules
+
+* Use a single source of truth for route constants.
+* Never unlock access from frontend callback alone.
+* Payment success must be confirmed by webhook signature verification.
+* Moodle sync must be retriable and idempotent.
+* Product URLs must remain stable after publishing.
+* Legal pages require version history.
+* Search indexing must run on publish/update events.
+
+### Recommended order
+
+1. Infrastructure and auth
+2. CMS and schema
+3. Public page templates
+4. Product catalog and search
+5. Checkout and payment webhooks
+6. Enrollment and Moodle sync
+7. Dashboards
+8. Analytics and QA
+
+---
+
+## 8. Acceptance Criteria Snapshot
+
+### Enrollment
+
+* User can pay successfully through Razorpay
+* Payment webhook verifies signature
+* Enrollment record is created once only
+* Moodle access is granted automatically
+* Invoice appears in participant dashboard
+
+### Search
+
+* User can search by keyword across products and mentors
+* Domain and product-type filters work
+* Search results return correct canonical URLs
+
+### Dashboards
+
+* Participant sees only own data
+* Mentor sees only assigned programs
+* Program manager sees assigned cohorts
+* Admin sees all operational data
+
+---
+
+## 9. Immediate Next Buildables
+
+* Prisma schema version
+* Payload collection definitions
+* Seed data for AI, Biotechnology, Nanotechnology
+* Route config JSON
+* Component inventory
+* CI/CD checklist

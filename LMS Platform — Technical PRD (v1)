@@ -1,0 +1,586 @@
+Here’s a **clean, production-ready Technical PRD** your dev team (including AI agents) can directly execute. I’ve structured it like a real engineering doc: clear scope, systems, schemas, and implementation details.
+
+---
+
+# 📘 LMS Platform — Technical PRD (v1)
+
+## 1. Product Overview
+
+### Goal
+
+Build a scalable **marketing + commerce + enrollment platform** for an LMS ecosystem with:
+
+* Multi-domain learning (AI, Biotechnology, Nanotechnology, etc.)
+* Structured product catalog
+* Role-based dashboards
+* Payment + enrollment automation
+* Integration with Moodle (learning delivery)
+* Intelligent search & recommendations
+
+---
+
+## 2. System Architecture
+
+### High-Level Architecture
+
+```txt
+[ Next.js Frontend ]
+        |
+        | (API Routes / Backend Layer)
+        |
+[ Application Server (Node.js) ]
+        |
+        ├── PostgreSQL (Core Data)
+        ├── Payload CMS (Content + Admin)
+        ├── Redis (Caching, sessions, queues)
+        ├── Search Engine (Meilisearch/Typesense)
+        ├── Razorpay (Payments)
+        └── Moodle (LMS via APIs)
+```
+
+---
+
+## 3. Tech Stack
+
+| Layer       | Technology                         |
+| ----------- | ---------------------------------- |
+| Frontend    | Next.js (App Router)               |
+| Backend     | Node.js (API routes / services)    |
+| CMS         | Payload CMS                        |
+| Database    | PostgreSQL                         |
+| Cache/Queue | Redis                              |
+| Search      | Meilisearch / Typesense            |
+| Payments    | Razorpay                           |
+| LMS         | Moodle (API integration)           |
+| Auth        | JWT / NextAuth                     |
+| Storage     | S3-compatible (AWS, Cloudflare R2) |
+
+---
+
+# 4. Sitemap
+
+## 4.1 Public Routes
+
+```txt
+/
+/enterprise
+/university
+/students
+/phd-professors
+/hiring-partners
+/join-us
+/mentors
+/partners
+
+/legal
+/legal/payment-policy
+/legal/cancellation-policy
+/legal/refund-policy
+/legal/privacy-policy
+/legal/consent-policy
+
+/search
+```
+
+---
+
+## 4.2 Domain Routes
+
+```txt
+/[domain]
+
+/ai
+/biotechnology
+/nanotechnology
+```
+
+---
+
+## 4.3 Domain Subpages
+
+```txt
+/[domain]/courses
+/[domain]/workshops
+/[domain]/internships
+/[domain]/flagship-programs
+/[domain]/packages
+
+/[domain]/enterprise
+/[domain]/university
+/[domain]/students
+/[domain]/phd-professors
+/[domain]/hiring-partners
+/[domain]/mentors
+```
+
+---
+
+## 4.4 Product Pages
+
+```txt
+/[domain]/course/[slug]
+/[domain]/workshop/[slug]
+/[domain]/internship/[slug]
+/[domain]/flagship-program/[slug]
+/[domain]/package/[slug]
+```
+
+---
+
+## 4.5 Dashboard Routes
+
+```txt
+/dashboard
+
+/dashboard/participant
+/dashboard/participant/enrollments
+/dashboard/participant/certificates
+/dashboard/participant/invoices
+
+/dashboard/mentor
+/dashboard/mentor/programs
+/dashboard/mentor/students
+
+/dashboard/admin
+/dashboard/admin/products
+/dashboard/admin/users
+/dashboard/admin/enrollments
+/dashboard/admin/payments
+
+/dashboard/program-manager
+/dashboard/program-manager/cohorts
+/dashboard/program-manager/progress
+```
+
+---
+
+# 5. Database Schema (PostgreSQL)
+
+## 5.1 Users
+
+```sql
+users (
+  id UUID PRIMARY KEY,
+  name TEXT,
+  email TEXT UNIQUE,
+  password_hash TEXT,
+  role ENUM('admin','mentor','participant','program_manager'),
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+)
+```
+
+---
+
+## 5.2 Domains
+
+```sql
+domains (
+  id UUID PRIMARY KEY,
+  name TEXT,
+  slug TEXT UNIQUE,
+  description TEXT,
+  created_at TIMESTAMP
+)
+```
+
+---
+
+## 5.3 Audience Segments
+
+```sql
+audiences (
+  id UUID PRIMARY KEY,
+  name TEXT,
+  slug TEXT UNIQUE
+)
+```
+
+---
+
+## 5.4 Products
+
+```sql
+products (
+  id UUID PRIMARY KEY,
+  title TEXT,
+  slug TEXT,
+  domain_id UUID,
+  type ENUM('course','workshop','internship','flagship_program','package'),
+  short_description TEXT,
+  long_description TEXT,
+  price NUMERIC,
+  sale_price NUMERIC,
+  duration TEXT,
+  level TEXT,
+  certificate BOOLEAN,
+  moodle_course_id TEXT,
+  status ENUM('draft','published'),
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+)
+```
+
+---
+
+## 5.5 Product Relationships
+
+```sql
+product_audiences (
+  product_id UUID,
+  audience_id UUID
+)
+
+product_mentors (
+  product_id UUID,
+  mentor_id UUID
+)
+```
+
+---
+
+## 5.6 Mentors
+
+```sql
+mentors (
+  id UUID PRIMARY KEY,
+  name TEXT,
+  slug TEXT,
+  bio TEXT,
+  photo_url TEXT
+)
+```
+
+---
+
+## 5.7 Enrollments
+
+```sql
+enrollments (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  product_id UUID,
+  payment_status ENUM('pending','paid','failed','refunded'),
+  access_status ENUM('locked','active','revoked'),
+  razorpay_payment_id TEXT,
+  invoice_id UUID,
+  moodle_enrollment_status BOOLEAN,
+  created_at TIMESTAMP
+)
+```
+
+---
+
+## 5.8 Payments
+
+```sql
+payments (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  amount NUMERIC,
+  currency TEXT,
+  razorpay_order_id TEXT,
+  razorpay_payment_id TEXT,
+  status ENUM('created','paid','failed','refunded'),
+  created_at TIMESTAMP
+)
+```
+
+---
+
+## 5.9 Invoices
+
+```sql
+invoices (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  payment_id UUID,
+  amount NUMERIC,
+  status TEXT,
+  pdf_url TEXT,
+  created_at TIMESTAMP
+)
+```
+
+---
+
+## 5.10 Certificates
+
+```sql
+certificates (
+  id UUID PRIMARY KEY,
+  user_id UUID,
+  product_id UUID,
+  certificate_url TEXT,
+  issued_at TIMESTAMP
+)
+```
+
+---
+
+## 5.11 Legal Pages
+
+```sql
+legal_documents (
+  id UUID PRIMARY KEY,
+  title TEXT,
+  slug TEXT,
+  content TEXT,
+  version TEXT,
+  effective_date DATE
+)
+```
+
+---
+
+# 6. Backend API Design
+
+## 6.1 Auth APIs
+
+```txt
+POST /api/auth/signup
+POST /api/auth/login
+GET  /api/auth/me
+```
+
+---
+
+## 6.2 Product APIs
+
+```txt
+GET /api/products
+GET /api/products/[slug]
+POST /api/admin/products
+PUT /api/admin/products/[id]
+```
+
+---
+
+## 6.3 Enrollment APIs
+
+```txt
+POST /api/enroll
+GET  /api/enrollments/user
+```
+
+---
+
+## 6.4 Payment APIs
+
+```txt
+POST /api/payment/create-order
+POST /api/payment/webhook
+```
+
+---
+
+## 6.5 Search APIs
+
+```txt
+GET /api/search?q=
+```
+
+---
+
+# 7. Payment Flow (Critical)
+
+## Flow
+
+```txt
+User → Click Enroll
+      → Create Razorpay Order
+      → Payment Success
+      → Razorpay Webhook
+      → Verify Signature
+      → Create Enrollment
+      → Enroll in Moodle
+      → Generate Invoice
+      → Send Confirmation
+```
+
+⚠️ Always trust **webhook**, not frontend response.
+
+---
+
+# 8. Moodle Integration
+
+## Required APIs
+
+* Create user (if not exists)
+* Enroll user in course
+* Fetch completion status
+* Fetch certificate
+
+## Integration Strategy
+
+* Store `moodle_course_id` in product
+* Trigger enrollment via backend
+* Sync completion via cron or webhook
+
+---
+
+# 9. Search System
+
+## Phase 1
+
+* Keyword search (Meilisearch)
+* Index:
+
+  * products
+  * mentors
+  * domains
+  * pages
+
+## Phase 2
+
+* Semantic search (embeddings)
+* Recommendation engine
+
+---
+
+# 10. Folder Structure (Next.js)
+
+```txt
+/app
+  /(public)
+    /page.tsx
+    /enterprise/page.tsx
+    /[domain]/
+      /page.tsx
+      /courses/page.tsx
+      /course/[slug]/page.tsx
+
+  /(dashboard)
+    /dashboard
+      /participant
+      /mentor
+      /admin
+      /program-manager
+
+/components
+  /ui
+  /product
+  /domain
+  /layout
+
+/lib
+  /db
+  /auth
+  /payment
+  /moodle
+  /search
+
+/services
+  enrollment.service.ts
+  payment.service.ts
+  search.service.ts
+
+/api
+  /auth
+  /products
+  /payments
+  /enrollments
+
+/types
+  index.ts
+
+/utils
+  helpers.ts
+```
+
+---
+
+# 11. Role-Based Access
+
+| Role            | Permissions              |
+| --------------- | ------------------------ |
+| Admin           | Full control             |
+| Program Manager | Manage cohorts, learners |
+| Mentor          | Assigned programs only   |
+| Participant     | Own enrollments          |
+
+---
+
+# 12. Security Requirements
+
+* JWT authentication
+* Role-based access control (RBAC)
+* Razorpay webhook signature validation
+* Rate limiting APIs
+* Input validation (Zod/Yup)
+* HTTPS everywhere
+
+---
+
+# 13. Deployment
+
+## Infrastructure
+
+* Frontend → Vercel
+* Backend → Node server (AWS / DigitalOcean)
+* DB → PostgreSQL (RDS / Supabase)
+* Redis → Upstash / self-hosted
+* Storage → S3 / R2
+
+---
+
+# 14. Development Phases
+
+## Phase 1
+
+* Auth
+* CMS
+* Product system
+* Public pages
+
+## Phase 2
+
+* Payments
+* Enrollment
+* Moodle integration
+
+## Phase 3
+
+* Dashboards
+* Search
+
+## Phase 4
+
+* Intelligence (recommendations)
+
+---
+
+# 15. KPIs
+
+* Conversion rate
+* Enrollment rate
+* Course completion rate
+* CAC vs LTV
+* Search success rate
+
+---
+
+# 16. Future Enhancements
+
+* Mobile app
+* AI tutor
+* Community/forums
+* Subscription model
+* Enterprise dashboards
+
+---
+
+# ✅ Final Summary
+
+This system gives you:
+
+* Scalable multi-domain LMS
+* Strong SEO architecture
+* Clean product taxonomy
+* Reliable payment + enrollment
+* Modular future upgrades
+* Safe migration path from Moodle
+
+---
+
+

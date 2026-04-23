@@ -1,0 +1,20 @@
+.title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.375rem; }
+.subtitle { color: var(--color-text-muted); margin-bottom: 2rem; }
+
+.statsRow { display: flex; gap: 1rem; margin-bottom: 2rem; }
+.statCard { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.625rem; min-width: 160px; }
+.statIcon { font-size: 1.5rem; }
+.statValue { font-size: 2rem; font-weight: 800; }
+.statLabel { font-size: 0.875rem; color: var(--color-text-muted); }
+
+.sectionTitle { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 4rem; text-align: center; border: 1px dashed var(--color-border); border-radius: var(--radius-2xl); color: var(--color-text-muted); }
+.empty span { font-size: 2.5rem; }
+
+.programGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+.programCard { padding: 1.5rem; display: flex; flex-direction: column; gap: 0.875rem; }
+.programHeader { display: flex; gap: 0.5rem; }
+.programTitle { font-size: 1rem; font-weight: 600; }
+.studentCount { font-size: 0.875rem; color: var(--color-text-muted); }
+.programActions { display: flex; gap: 0.625rem; padding-top: 0.75rem; border-top: 1px solid var(--color-border); margin-top: auto; }
