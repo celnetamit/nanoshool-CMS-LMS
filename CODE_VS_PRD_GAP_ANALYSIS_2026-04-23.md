@@ -223,6 +223,28 @@ Fix:
 
 ### Wave 1 — Conversion And Route Integrity
 
+Status: Completed
+
+Verification note (2026-04-23):
+- Product detail enrollment CTA now uses checkout trigger/modal flow in [app/(public)/[domain]/[type]/[slug]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/[type]/[slug]/page.tsx:376) and [app/(public)/[domain]/[type]/[slug]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/[type]/[slug]/page.tsx:420).
+- Linked missing public and dashboard routes are implemented, including:
+  [app/(public)/enterprise/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/enterprise/page.tsx:1),
+  [app/(public)/students/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/students/page.tsx:1),
+  [app/(public)/university/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/university/page.tsx:1),
+  [app/(public)/phd-professors/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/phd-professors/page.tsx:1),
+  [app/(public)/hiring-partners/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/hiring-partners/page.tsx:1),
+  [app/(public)/join-us/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/join-us/page.tsx:1),
+  [app/(public)/mentors/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/mentors/page.tsx:1),
+  [app/(public)/partners/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/partners/page.tsx:1),
+  [app/dashboard/participant/certificates/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/participant/certificates/page.tsx:1),
+  [app/dashboard/mentor/programs/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/mentor/programs/page.tsx:1),
+  [app/dashboard/mentor/students/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/mentor/students/page.tsx:1),
+  [app/dashboard/program-manager/cohorts/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/program-manager/cohorts/page.tsx:1),
+  [app/dashboard/program-manager/progress/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/program-manager/progress/page.tsx:1),
+  [app/dashboard/admin/products/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/admin/products/page.tsx:1).
+- `/api/enroll` route exists and redirects authenticated users to checkout and unauthenticated users to login callback in [app/api/enroll/route.ts](/home/itb09/Desktop/projects/nstc/app/api/enroll/route.ts:1).
+- Local production build verification passed on 2026-04-23 via `npm run build` (exit code `0`, route generation completed).
+
 1. Fix product detail enrollment flow to use the real checkout path.
 2. Implement every linked but missing route as a real page shell.
 3. Add `/api/enroll` only if you want to keep the PRD contract; otherwise remove references and standardize on `/api/payment/create-order`.
@@ -253,8 +275,8 @@ Fix:
 
 If the goal is to move fastest without broad refactoring, the best next five tasks are:
 
-1. Fix the broken `Enroll Now` journey on product pages.
-2. Create the missing linked routes so navigation matches the PRD.
-3. Implement participant certificates and admin products pages first, because they are already linked from dashboards.
-4. Replace placeholder product detail sections with real curriculum, FAQ, outcomes, and mentors data.
-5. Complete invoice upload and free-product enrollment so both paid and free commerce paths work end to end.
+1. Replace placeholder product detail sections with real curriculum, FAQ, outcomes, prerequisites, and mentors data from Payload/DB.
+2. Complete free-product enrollment so zero-price products create enrollments directly and land users in their dashboard journey.
+3. Implement durable invoice storage upload (S3/R2) and persist real invoice URLs instead of placeholder paths.
+4. Move audience content to fully PRD-aligned CMS delivery, including remaining domain-scoped audience pages and editable content models.
+5. Replace mocked semantic search and wire product reindexing hooks/jobs so search quality and freshness are production-ready.
