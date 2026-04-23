@@ -11,8 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "psql $DATABASE_URL -f scripts/migrate.sql",
-    "db:seed": "npx tsx scripts/seed.ts",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
     "payload": "payload",
     "worker:moodle": "npx tsx lib/queues/worker.ts"
   },
