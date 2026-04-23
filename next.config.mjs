@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
+const useStandaloneOutput = process.env.NEXT_OUTPUT_STANDALONE === '1'
+
 const nextConfig = {
-  output: 'standalone',
+  output: useStandaloneOutput ? 'standalone' : undefined,
   // Prevent webpack from bundling server-only native packages
   serverExternalPackages: ['pdfkit', 'fontkit', 'restructure', 'iconv-lite'],
   images: {

@@ -11,10 +11,28 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const oauthError = searchParams.get('error')
 
   const [tab, setTab] = useState<'login' | 'signup'>('login')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const oauthErrorMessage =
+    oauthError === 'AccessDenied'
+      ? 'Google sign-in was denied after callback. This usually means the app could not create or load your local user account.'
+      : oauthError === 'Configuration'
+        ? 'Authentication is configured incorrectly. Please recheck the Google OAuth client and app URL settings.'
+        : oauthError === 'Verification'
+          ? 'The Google sign-in request could not be verified. Please try again.'
+          : ''
+
+  const handleGoogleLogin = async () => {
+    setError('')
+    setGoogleLoading(true)
+    await signIn('google', { callbackUrl })
+    setGoogleLoading(false)
+  }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -88,7 +106,22 @@ function LoginForm() {
       </div>
 
       {/* Error */}
-      {error && <div className={styles.error}>{error}</div>}
+      {(error || oauthErrorMessage) && <div className={styles.error}>{error || oauthErrorMessage}</div>}
+
+      <div className={styles.oauthSection}>
+        <button
+          type="button"
+          className={styles.googleButton}
+          onClick={handleGoogleLogin}
+          disabled={loading || googleLoading}
+        >
+          <span className={styles.googleMark} aria-hidden="true">G</span>
+          <span>{googleLoading ? 'Redirecting to Google...' : 'Continue with Google'}</span>
+        </button>
+        <div className={styles.divider}>
+          <span>or use email</span>
+        </div>
+      </div>
 
       {/* Login Form */}
       {tab === 'login' && (

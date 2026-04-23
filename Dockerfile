@@ -18,6 +18,7 @@ COPY . .
 
 # Next.js telemetry is disabled
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_OUTPUT_STANDALONE=1
 
 # These are the only build-time public vars needed
 ENV NEXT_PUBLIC_APP_URL=""
