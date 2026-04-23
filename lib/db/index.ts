@@ -5,6 +5,11 @@ declare global {
   var _pgPool: Pool | undefined
 }
 
+// Validate at startup — fail fast with a clear message
+if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
+  throw new Error('[DB] DATABASE_URL environment variable is not set. Cannot start.')
+}
+
 const pool: Pool =
   global._pgPool ??
   new Pool({

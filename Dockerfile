@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -17,12 +17,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Next.js telemetry is disabled
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Disable Type checks and Linting during build for faster deployment (optional, standard for Coolify)
-ENV NEXT_PUBLIC_POSTHOG_KEY ""
-ENV NEXT_PUBLIC_POSTHOG_HOST ""
-ENV NEXT_PUBLIC_APP_URL ""
+# These are the only build-time public vars needed
+ENV NEXT_PUBLIC_APP_URL=""
+ENV NEXT_PUBLIC_POSTHOG_KEY=""
+ENV NEXT_PUBLIC_POSTHOG_HOST=""
 
 RUN npm run build
 
@@ -30,14 +30,14 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Set the correct permission for prerender cache
-RUN mkdir .next
+RUN mkdir -p .next public
 RUN chown nextjs:nodejs .next
 
 # Automatically leverage output traces to reduce image size
@@ -50,8 +50,7 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-# set hostname to localhost
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]

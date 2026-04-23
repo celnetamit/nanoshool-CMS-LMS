@@ -2,10 +2,17 @@ import Razorpay from 'razorpay'
 import { query, queryOne } from '@/lib/db'
 import type { DBPayment } from '@/types'
 
-export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+// Lazy-init: avoid constructor throwing during Next.js build when env vars aren't set
+let _razorpay: Razorpay | null = null
+function getRazorpay(): Razorpay {
+  if (!_razorpay) {
+    _razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID!,
+      key_secret: process.env.RAZORPAY_KEY_SECRET!,
+    })
+  }
+  return _razorpay
+}
 
 // ─── Create Razorpay Order + DB Payment record ─────────────
 export async function createPaymentOrder({
@@ -22,7 +29,7 @@ export async function createPaymentOrder({
   notes?: Record<string, string>
 }): Promise<{ orderId: string; amount: number; currency: string; keyId: string; paymentId: string }> {
   // Create Razorpay order
-  const order = await razorpay.orders.create({
+  const order = await getRazorpay().orders.create({
     amount,
     currency,
     notes: { userId, productId, ...notes },
@@ -91,7 +98,7 @@ export async function initiateRefund({
   amount?: number
   notes?: Record<string, string>
 }): Promise<{ refundId: string }> {
-  const refund = await razorpay.payments.refund(razorpayPaymentId, {
+  const refund = await getRazorpay().payments.refund(razorpayPaymentId, {
     amount,
     notes,
   })

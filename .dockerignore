@@ -2,8 +2,15 @@ Dockerfile
 .dockerignore
 node_modules
 npm-debug.log
-README.md
 .next
 .git
-.env*
-!.env.example
+.env
+.env.local
+.env.*.local
+*.md
+docs/
+planning
+"LMS Platform*"
+"Lms Platform*"
+payload
+scripts

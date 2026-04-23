@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Prevent webpack from bundling server-only native packages
+  serverExternalPackages: ['pdfkit', 'fontkit', 'restructure', 'iconv-lite'],
   images: {
     remotePatterns: [
       {
