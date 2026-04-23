@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 import { DASHBOARD_ROOT_BY_ROLE } from '@/types/routes'
 import type { UserRole } from '@/types'
-import { auth } from '@/lib/auth'
 
 // Route → required role
 const PROTECTED_ROUTES: Record<string, UserRole[]> = {
@@ -11,14 +12,26 @@ const PROTECTED_ROUTES: Record<string, UserRole[]> = {
   '/dashboard/participant': ['admin', 'participant'],
 }
 
-export default auth((req) => {
+async function readAuthToken(req: NextRequest) {
+  const secureCookie = req.nextUrl.protocol === 'https:'
+  const cookieName = secureCookie ? '__Secure-authjs.session-token' : 'authjs.session-token'
+
+  return getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+    secureCookie,
+    cookieName,
+  })
+}
+
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
-  const session = req.auth
-  const userRole = session?.user?.role as UserRole | undefined
+  const token = await readAuthToken(req)
+  const userRole = token?.role as UserRole | undefined
 
   // If user hits /dashboard, redirect to their role dashboard
   if (pathname === '/dashboard') {
-    if (!session?.user) {
+    if (!token) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
     const target = DASHBOARD_ROOT_BY_ROLE[userRole ?? 'participant'] ?? '/dashboard/participant'
@@ -28,7 +41,7 @@ export default auth((req) => {
   // Check protected dashboard routes
   for (const [route, allowedRoles] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname.startsWith(route)) {
-      if (!session?.user) {
+      if (!token) {
         const loginUrl = new URL('/login', req.url)
         loginUrl.searchParams.set('callbackUrl', pathname)
         return NextResponse.redirect(loginUrl)
@@ -42,7 +55,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: ['/dashboard/:path*', '/api/admin/:path*', '/api/enroll', '/api/enrollments/:path*'],
