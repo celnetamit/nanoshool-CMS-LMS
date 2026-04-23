@@ -5,15 +5,30 @@ declare global {
   var _redis: Redis | undefined
 }
 
-const redis: Redis =
-  global._redis ??
-  new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+function createRedisClient(): Redis {
+  const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
     maxRetriesPerRequest: 3,
+    lazyConnect: true,
     retryStrategy(times) {
+      // Stop retrying after 3 attempts during build/SSG
+      if (times > 3) return null
       const delay = Math.min(times * 100, 3000)
       return delay
     },
   })
+
+  // Prevent unhandled error events from crashing the process
+  // (e.g. when Redis is unavailable during Next.js static generation)
+  client.on('error', (err) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[Redis] Connection error (suppressed):', err.message)
+    }
+  })
+
+  return client
+}
+
+const redis: Redis = global._redis ?? createRedisClient()
 
 if (process.env.NODE_ENV !== 'production') {
   global._redis = redis

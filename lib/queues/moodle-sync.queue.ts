@@ -9,16 +9,23 @@ import { syncUserEnrollment, unenrollUserFromCourse, getCourseCompletion } from 
 import { markMoodleEnrolled, markCompleted } from '@/services/enrollment.service'
 import { query } from '@/lib/db'
 
-// ─── Queue Definition ──────────────────────────────────────
-export const moodleSyncQueue = new Queue('moodle-sync', {
-  connection: redis,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 1000 },
-    removeOnComplete: 100,
-    removeOnFail: 500,
-  },
-})
+// ─── Queue Definition (lazy) ───────────────────────────────
+let _moodleSyncQueue: Queue | null = null
+
+export function getMoodleSyncQueue(): Queue {
+  if (!_moodleSyncQueue) {
+    _moodleSyncQueue = new Queue('moodle-sync', {
+      connection: redis,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: 100,
+        removeOnFail: 500,
+      },
+    })
+  }
+  return _moodleSyncQueue
+}
 
 // ─── Job Types ──────────────────────────────────────────────
 export type MoodleSyncJob =
@@ -46,7 +53,7 @@ export type MoodleSyncJob =
 
 // ─── Enqueue a sync job ────────────────────────────────────
 export async function enqueueMoodleSync(job: MoodleSyncJob): Promise<void> {
-  await moodleSyncQueue.add(job.type, job)
+  await getMoodleSyncQueue().add(job.type, job)
 }
 
 // ─── Worker (run in a separate process or server startup) ──

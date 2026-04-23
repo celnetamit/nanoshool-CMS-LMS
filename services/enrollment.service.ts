@@ -104,8 +104,12 @@ export async function checkAccess(userId: string, productId: string): Promise<bo
 // ─── Get all enrollments for a user (with cache) ───────────
 export async function getUserEnrollments(userId: string): Promise<EnrollmentWithProduct[]> {
   const cacheKey = `enrollments:user:${userId}`
-  const cached = await redis.get(cacheKey)
-  if (cached) return JSON.parse(cached)
+
+  // Try Redis cache — gracefully skip if Redis is unavailable
+  try {
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+  } catch { /* Redis unavailable — fall through to DB */ }
 
   const enrollments = await query<EnrollmentWithProduct>(
     `SELECT e.*, p.title AS product_title, p.slug AS product_slug,
@@ -118,7 +122,11 @@ export async function getUserEnrollments(userId: string): Promise<EnrollmentWith
     [userId]
   )
 
-  await redis.set(cacheKey, JSON.stringify(enrollments), 'EX', 300)
+  // Try to write to cache — skip if Redis is unavailable
+  try {
+    await redis.set(cacheKey, JSON.stringify(enrollments), 'EX', 300)
+  } catch { /* Redis unavailable */ }
+
   return enrollments
 }
 
