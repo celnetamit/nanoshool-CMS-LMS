@@ -25,7 +25,7 @@ type PayloadDomainRef = {
 type PayloadMentor = {
   id: string
   name: string
-  slug: string
+  slug?: string
   tagline?: string | null
   expertise?: { area?: string | null }[] | null
 }
@@ -172,7 +172,51 @@ export default async function ProductDetailPage({ params }: Props) {
     }))
     .filter((item) => item.question) ?? []
   const curriculum = payloadProduct?.curriculum?.filter((module) => module.moduleTitle) ?? []
-  const mentors = payloadProduct?.mentors?.filter((mentor) => mentor?.name && mentor?.slug) ?? []
+  let dbMentors: PayloadMentor[] = []
+  let dbRelatedProducts: { id: string; title: string; description: string; href: string }[] = []
+
+  try {
+    dbMentors = await query<{ id: string; name: string }>(
+      `SELECT u.id, u.name
+       FROM product_mentors pm
+       JOIN users u ON u.id = pm.user_id
+       WHERE pm.product_id = $1
+       ORDER BY u.name ASC`,
+      [product.id]
+    ) as unknown as PayloadMentor[]
+  } catch {
+    dbMentors = []
+  }
+
+  try {
+    const relatedRows = await query<{
+      id: string
+      title: string
+      slug: string
+      type: string
+      short_description: string | null
+      domain_slug: string
+    }>(
+      `SELECT p.id, p.title, p.slug, p.type, p.short_description, d.slug AS domain_slug
+       FROM products p
+       JOIN domains d ON d.id = p.domain_id
+       WHERE p.status = 'published' AND p.id <> $1 AND d.slug = $2
+       ORDER BY p.created_at DESC
+       LIMIT 3`,
+      [product.id, domain]
+    )
+
+    dbRelatedProducts = relatedRows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      description: row.short_description?.trim() || '',
+      href: `/${row.domain_slug}/${row.type.replace('_', '-')}/${row.slug}`,
+    }))
+  } catch {
+    dbRelatedProducts = []
+  }
+
+  const mentors = (payloadProduct?.mentors?.filter((mentor) => mentor?.name && mentor?.slug) ?? [])
   const relatedProducts = (payloadProduct?.relatedProducts ?? [])
     .map((related) => {
       const relatedDomain = getRelationshipSlug(related.domain)
@@ -186,6 +230,8 @@ export default async function ProductDetailPage({ params }: Props) {
       }
     })
     .filter(Boolean) as { id: string; title: string; description: string; href: string }[]
+  const resolvedMentors = mentors.length ? mentors : dbMentors
+  const resolvedRelatedProducts = relatedProducts.length ? relatedProducts : dbRelatedProducts
 
   return (
     <div className={styles.page}>
@@ -297,11 +343,11 @@ export default async function ProductDetailPage({ params }: Props) {
               </section>
             ) : null}
 
-            {mentors.length ? (
+            {resolvedMentors.length ? (
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Meet Your Mentors</h2>
                 <div className={styles.mentorGrid}>
-                  {mentors.map((mentor) => (
+                  {resolvedMentors.map((mentor) => (
                     <div key={mentor.id} className={styles.mentorCard}>
                       <div className={styles.mentorAvatar}>{mentor.name.charAt(0).toUpperCase()}</div>
                       <div>
@@ -338,11 +384,11 @@ export default async function ProductDetailPage({ params }: Props) {
               )}
             </section>
 
-            {relatedProducts.length ? (
+            {resolvedRelatedProducts.length ? (
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Related Programs</h2>
                 <div className={styles.relatedGrid}>
-                  {relatedProducts.map((related) => (
+                  {resolvedRelatedProducts.map((related) => (
                     <Link key={related.id} href={related.href} className={styles.relatedCard}>
                       <h3 className={styles.relatedTitle}>{related.title}</h3>
                       {related.description && <p className={styles.relatedDesc}>{related.description}</p>}

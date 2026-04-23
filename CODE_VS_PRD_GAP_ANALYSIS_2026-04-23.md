@@ -252,6 +252,21 @@ Verification note (2026-04-23):
 
 ### Wave 2 — PRD Core Surface Completion
 
+Status: Completed
+
+Verification note (2026-04-23):
+- Audience landing flow is implemented with real audience filtering by `product_audiences` + `audiences` in [app/(public)/[domain]/[type]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/[type]/page.tsx:53) and [app/(public)/[domain]/[type]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/[type]/page.tsx:74).
+- Wave-2 dashboard routes now render data-backed views:
+  [app/dashboard/participant/certificates/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/participant/certificates/page.tsx:1),
+  [app/dashboard/mentor/programs/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/mentor/programs/page.tsx:1),
+  [app/dashboard/mentor/students/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/mentor/students/page.tsx:1),
+  [app/dashboard/program-manager/cohorts/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/program-manager/cohorts/page.tsx:1),
+  [app/dashboard/program-manager/progress/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/program-manager/progress/page.tsx:1),
+  [app/dashboard/admin/products/page.tsx](/home/itb09/Desktop/projects/nstc/app/dashboard/admin/products/page.tsx:1).
+- Product detail uses Payload-first with DB fallbacks for mentors and related programs in [app/(public)/[domain]/[type]/[slug]/page.tsx](/home/itb09/Desktop/projects/nstc/app/(public)/[domain]/[type]/[slug]/page.tsx:154).
+- Free-product enrollment is implemented end-to-end in [app/api/payment/create-order/route.ts](/home/itb09/Desktop/projects/nstc/app/api/payment/create-order/route.ts:74) with supporting changes in [services/payment.service.ts](/home/itb09/Desktop/projects/nstc/services/payment.service.ts:63) and [services/enrollment.service.ts](/home/itb09/Desktop/projects/nstc/services/enrollment.service.ts:13).
+- Local verification passed on 2026-04-23 via `npm run typecheck` and `npm run build` (both exit code `0`).
+
 1. Implement audience landing pages.
 2. Implement missing dashboard pages:
    participant certificates,

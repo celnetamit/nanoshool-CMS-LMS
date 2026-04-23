@@ -52,6 +52,23 @@ export default async function ProductListingPage({ params }: Props) {
 
   if (AUDIENCE_LABELS[type]) {
     const audience = AUDIENCE_LABELS[type]
+    let audienceProducts: (DBProduct & { domain_name: string; domain_slug: string })[] = []
+
+    try {
+      audienceProducts = await query<DBProduct & { domain_name: string; domain_slug: string }>(
+        `SELECT p.*, d.name AS domain_name, d.slug AS domain_slug
+         FROM products p
+         JOIN domains d ON d.id = p.domain_id
+         JOIN product_audiences pa ON pa.product_id = p.id
+         JOIN audiences a ON a.id = pa.audience_id
+         WHERE d.slug = $1 AND a.slug = $2 AND p.status = 'published'
+         ORDER BY p.created_at DESC`,
+        [domain, type]
+      )
+    } catch {
+      audienceProducts = []
+    }
+
     return (
       <div>
         <section className={styles.header}>
@@ -63,23 +80,46 @@ export default async function ProductListingPage({ params }: Props) {
             </nav>
             <h1 className={styles.title}>{audience} in {domainLabel}</h1>
             <p className={styles.subtitle}>
-              Tailored pathways, outcomes, and support for {audience.toLowerCase()} in {domainLabel}.
+              {audienceProducts.length} program{audienceProducts.length !== 1 ? 's' : ''} tailored for {audience.toLowerCase()} in {domainLabel}.
             </p>
           </div>
         </section>
 
-        <div className="container" style={{ paddingBottom: '4rem' }}>
-          <div className="card" style={{ padding: '2rem' }}>
-            <h2 style={{ marginBottom: '1rem' }}>Audience-Specific Programs</h2>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-              We are preparing curated {audience.toLowerCase()} tracks in {domainLabel}. Start with our core catalog while we
-              finalize this dedicated track.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <Link href={`/${domain}/courses`} className="btn btn-primary">View Courses</Link>
-              <Link href={`/${domain}/workshops`} className="btn btn-secondary">View Workshops</Link>
-              <Link href={`/${domain}`} className="btn btn-ghost">Back to {domainLabel}</Link>
-            </div>
+        <div className="container">
+          <div className={styles.main} style={{ paddingBottom: '4rem' }}>
+            {audienceProducts.length > 0 ? (
+              <div className={styles.grid}>
+                {audienceProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    id={p.id}
+                    title={p.title}
+                    slug={p.slug}
+                    type={p.type}
+                    domain={p.domain_name}
+                    domainSlug={p.domain_slug}
+                    shortDescription={p.short_description}
+                    price={Number(p.price)}
+                    salePrice={p.sale_price ? Number(p.sale_price) : undefined}
+                    duration={p.duration}
+                    level={p.level}
+                    certificate={p.certificate}
+                    format={p.format}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>📭</span>
+                <h3>No dedicated {audience} programs yet</h3>
+                <p>Explore current domain offerings while we publish this audience track.</p>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1rem' }}>
+                  <Link href={`/${domain}/courses`} className="btn btn-primary">View Courses</Link>
+                  <Link href={`/${domain}/workshops`} className="btn btn-secondary">View Workshops</Link>
+                  <Link href={`/${domain}`} className="btn btn-ghost">Back to {domainLabel}</Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
