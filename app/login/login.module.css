@@ -79,6 +79,13 @@
   color: #f87171;
 }
 
+.errorCode {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: rgba(248, 113, 113, 0.85);
+  font-family: var(--font-mono);
+}
+
 .oauthSection {
   display: flex;
   flex-direction: column;

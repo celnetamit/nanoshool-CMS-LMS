@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { getCsrfToken, signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import styles from './login.module.css'
@@ -26,12 +26,42 @@ function LoginForm() {
         : oauthError === 'Verification'
           ? 'The Google sign-in request could not be verified. Please try again.'
           : ''
+  const oauthDebugMessage = oauthError ? `Raw auth error code: ${oauthError}` : ''
 
   const handleGoogleLogin = async () => {
     setError('')
     setGoogleLoading(true)
-    await signIn('google', { callbackUrl })
-    setGoogleLoading(false)
+    try {
+      const csrfToken = await getCsrfToken()
+      if (!csrfToken) {
+        throw new Error('Missing CSRF token')
+      }
+
+      const body = new URLSearchParams({
+        csrfToken,
+        callbackUrl,
+      })
+
+      const res = await fetch('/api/auth/signin/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Auth-Return-Redirect': '1',
+        },
+        body,
+      })
+
+      const data = (await res.json()) as { url?: string }
+      if (!res.ok || !data.url) {
+        throw new Error('Google sign-in did not return a redirect URL')
+      }
+
+      window.location.href = data.url
+    } catch (err) {
+      console.error('[Auth] Google client sign-in failed:', err)
+      setError('Google sign-in could not start. Please recheck the app URL and OAuth settings.')
+      setGoogleLoading(false)
+    }
   }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,7 +136,12 @@ function LoginForm() {
       </div>
 
       {/* Error */}
-      {(error || oauthErrorMessage) && <div className={styles.error}>{error || oauthErrorMessage}</div>}
+      {(error || oauthErrorMessage) && (
+        <div className={styles.error}>
+          <div>{error || oauthErrorMessage}</div>
+          {oauthDebugMessage && <div className={styles.errorCode}>{oauthDebugMessage}</div>}
+        </div>
+      )}
 
       <div className={styles.oauthSection}>
         <button

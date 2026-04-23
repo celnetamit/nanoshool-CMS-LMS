@@ -36,7 +36,17 @@ async function upsertOAuthUser(email: string, name?: string | null): Promise<Aut
   return rows[0]
 }
 
+if (process.env.NODE_ENV !== 'production') {
+  console.info('[Auth] Provider config', {
+    nextAuthUrl: process.env.NEXTAUTH_URL || '(missing)',
+    hasNextAuthSecret: Boolean(process.env.NEXTAUTH_SECRET),
+    hasGoogleClientId: Boolean(process.env.GOOGLE_CLIENT_ID),
+    hasGoogleClientSecret: Boolean(process.env.GOOGLE_CLIENT_SECRET),
+  })
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  debug: process.env.NODE_ENV !== 'production',
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
