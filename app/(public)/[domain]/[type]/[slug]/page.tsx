@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { queryOne, query } from '@/lib/db'
+import { auth } from '@/lib/auth'
+import { CheckoutTrigger } from '@/components/checkout/CheckoutTrigger'
 import styles from './product.module.css'
 import type { DBProduct } from '@/types'
 
@@ -53,6 +55,7 @@ export default async function ProductDetailPage({ params }: Props) {
   const discountPct = hasDiscount
     ? Math.round(((Number(product.price) - Number(product.sale_price)) / Number(product.price)) * 100)
     : null
+  const session = await auth()
 
   return (
     <div className={styles.page}>
@@ -149,9 +152,17 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
 
               {/* CTA */}
-              <Link href={`/checkout?productId=${product.id}`} className={`btn btn-primary ${styles.enrollBtn}`}>
-                Enroll Now →
-              </Link>
+              <CheckoutTrigger
+                productId={product.id}
+                productTitle={product.title}
+                price={Number(product.price)}
+                salePrice={product.sale_price ? Number(product.sale_price) : undefined}
+                isAuthenticated={Boolean(session?.user)}
+                userName={session?.user?.name ?? undefined}
+                userEmail={session?.user?.email ?? undefined}
+                className={`btn btn-primary ${styles.enrollBtn}`}
+                label="Enroll Now ->"
+              />
               <p className={styles.enrollNote}>30-day money-back guarantee</p>
 
               {/* Highlights */}
@@ -185,9 +196,17 @@ export default async function ProductDetailPage({ params }: Props) {
           </span>
           {hasDiscount && <span className={styles.mobileDiscount}>{discountPct}% off</span>}
         </div>
-        <Link href={`/checkout?productId=${product.id}`} className="btn btn-primary">
-          Enroll Now →
-        </Link>
+        <CheckoutTrigger
+          productId={product.id}
+          productTitle={product.title}
+          price={Number(product.price)}
+          salePrice={product.sale_price ? Number(product.sale_price) : undefined}
+          isAuthenticated={Boolean(session?.user)}
+          userName={session?.user?.name ?? undefined}
+          userEmail={session?.user?.email ?? undefined}
+          className="btn btn-primary"
+          label="Enroll Now ->"
+        />
       </div>
     </div>
   )
