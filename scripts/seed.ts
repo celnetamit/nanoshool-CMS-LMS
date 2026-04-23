@@ -8,7 +8,7 @@ async function seedAdmin() {
   const client = new Client({ connectionString: process.env.DATABASE_URL })
   await client.connect()
 
-  const email = 'admin@nstc.edu'
+  const email = process.env.ADMIN_EMAIL || 'amit.rai@celnet.in'
   const password = 'password123'
   const hash = await bcrypt.hash(password, 10)
 

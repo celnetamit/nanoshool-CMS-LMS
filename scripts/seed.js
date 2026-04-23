@@ -18,7 +18,7 @@ async function seedAdmin() {
   const client = new Client({ connectionString })
   await client.connect()
 
-  const email = process.env.ADMIN_EMAIL || 'admin@nstc.edu'
+  const email = process.env.ADMIN_EMAIL || 'amit.rai@celnet.in'
   const password = process.env.ADMIN_PASSWORD || 'password123'
   const hash = await bcrypt.hash(password, 10)
 
@@ -44,4 +44,3 @@ seedAdmin().catch((error) => {
   console.error('[db:seed] Failed:', error.message)
   process.exit(1)
 })
-
