@@ -1,5 +1,5 @@
 .layout {
-  display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;
+  min-height: 100vh;
 }
 .sidebar {
   position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
@@ -34,4 +34,15 @@
 .role { font-size: 0.75rem; color: var(--color-text-subtle); }
 .signout { font-size: 0.875rem; color: var(--color-error); padding: 0.375rem 0.5rem; border-radius: var(--radius-md); transition: background var(--transition-fast); }
 .signout:hover { background: rgba(239,68,68,0.08); }
-.main { margin-left: 240px; padding: 2.5rem; min-height: 100vh; }
+.main {
+  margin-left: 240px;
+  width: calc(100vw - 240px);
+  min-width: 0;
+  padding: 2.5rem;
+  min-height: 100vh;
+}
+
+@media (max-width: 1024px) {
+  .sidebar { position: static; width: 100%; height: auto; }
+  .main { margin-left: 0; width: 100%; padding: 1.5rem; }
+}

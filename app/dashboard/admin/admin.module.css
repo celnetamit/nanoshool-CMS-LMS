@@ -1,6 +1,4 @@
 .layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
   min-height: 100vh;
   background: var(--color-bg);
 }
@@ -112,13 +110,14 @@
 /* ─── Main ─────────────────────────────────────── */
 .main {
   margin-left: 280px;
+  width: calc(100vw - 280px);
+  min-width: 0;
   padding: 2.5rem;
   min-height: 100vh;
-  max-width: calc(100vw - 280px);
+  max-width: none;
 }
 
 @media (max-width: 1024px) {
-  .layout { grid-template-columns: 1fr; }
   .sidebar { position: static; width: 100%; height: auto; }
-  .main { margin-left: 0; max-width: 100%; padding: 1.5rem; }
+  .main { margin-left: 0; width: 100%; max-width: 100%; padding: 1.5rem; }
 }

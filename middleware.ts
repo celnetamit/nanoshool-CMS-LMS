@@ -83,6 +83,9 @@ export default async function middleware(req: NextRequest) {
         loginUrl.searchParams.set('callbackUrl', pathname)
         return NextResponse.redirect(loginUrl)
       }
+      if (route === '/dashboard/participant' && userRole === 'admin') {
+        return NextResponse.redirect(new URL('/dashboard/admin', req.url))
+      }
       if (!userRole || !allowedRoles.includes(userRole)) {
         // Redirect to their own dashboard
         const target = DASHBOARD_ROOT_BY_ROLE[userRole ?? 'participant'] ?? '/'
