@@ -8,6 +8,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
+COPY scripts/patch-drizzle-kit.js ./scripts/patch-drizzle-kit.js
 RUN npm ci
 
 # Rebuild the source code only when needed
