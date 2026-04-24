@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { DASHBOARD_ROOT_BY_ROLE } from '@/types/routes'
 import type { UserRole } from '@/types'
+import { DOMAINS } from '@/types/routes'
 
 // Route → required role
 const PROTECTED_ROUTES: Record<string, UserRole[]> = {
@@ -10,6 +11,42 @@ const PROTECTED_ROUTES: Record<string, UserRole[]> = {
   '/dashboard/program-manager': ['admin', 'program_manager'],
   '/dashboard/mentor': ['admin', 'mentor'],
   '/dashboard/participant': ['admin', 'participant'],
+}
+
+const RESERVED_PUBLIC_SEGMENTS = new Set([
+  'api',
+  'admin',
+  'dashboard',
+  'login',
+  'checkout',
+  'legal',
+  'search',
+  'enterprise',
+  'university',
+  'students',
+  'phd-professors',
+  'hiring-partners',
+  'join-us',
+  'mentors',
+  'partners',
+  'cms',
+])
+
+const RESERVED_FILE_PATHS = new Set(['/favicon.ico', '/robots.txt', '/sitemap.xml'])
+
+function shouldRewriteToCMS(pathname: string, method: string) {
+  if (!['GET', 'HEAD'].includes(method)) return false
+  if (pathname === '/') return false
+  if (pathname.startsWith('/_next')) return false
+  if (RESERVED_FILE_PATHS.has(pathname)) return false
+  if (pathname.includes('.')) return false
+
+  const firstSegment = pathname.split('/').filter(Boolean)[0]
+  if (!firstSegment) return false
+  if (RESERVED_PUBLIC_SEGMENTS.has(firstSegment)) return false
+  if (DOMAINS.includes(firstSegment as (typeof DOMAINS)[number])) return false
+
+  return true
 }
 
 async function readAuthToken(req: NextRequest) {
@@ -54,9 +91,20 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
+  if (shouldRewriteToCMS(pathname, req.method)) {
+    const rewriteUrl = req.nextUrl.clone()
+    rewriteUrl.pathname = `/cms${pathname}`
+    return NextResponse.rewrite(rewriteUrl)
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/admin/:path*', '/api/enroll', '/api/enrollments/:path*'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+    '/api/admin/:path*',
+    '/api/enroll',
+    '/api/enrollments/:path*',
+  ],
 }

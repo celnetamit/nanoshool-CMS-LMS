@@ -217,6 +217,11 @@ flowchart LR
   - `/dashboard/admin/users`
   - `/dashboard/admin/enrollments`
   - `/dashboard/admin/payments`
+  - `/admin/collections/pages` (CMS page management)
+
+CMS page publishing:
+- Create a published page in Payload with `path` like `/about-us`
+- The app automatically serves it on that URL via middleware rewrite to the CMS renderer
 
 ## Key API Endpoints
 

@@ -184,6 +184,7 @@ export default async function AdminOverviewPage() {
             { label: 'Manage Users', href: '/dashboard/admin/users', icon: '👥', desc: 'View and edit user accounts' },
             { label: 'Process Refund', href: '/dashboard/admin/enrollments', icon: '↩️', desc: 'Initiate a refund for an enrollment' },
             { label: 'Add Coupon', href: '/dashboard/admin/coupons/new', icon: '🎟️', desc: 'Create a discount coupon' },
+            { label: 'Manage Pages', href: '/admin/collections/pages', icon: '📝', desc: 'Create and publish CMS pages' },
             { label: 'Payload CMS', href: '/admin', icon: '🔧', desc: 'Manage content in the CMS' },
             { label: 'View Reports', href: '/dashboard/admin/payments', icon: '📈', desc: 'Payment reports and analytics' },
           ].map((a) => (

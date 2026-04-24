@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 import { Users } from './payload/collections/Users'
 import { Domains } from './payload/collections/Domains'
 import { Products } from './payload/collections/Products'
+import { Pages } from './payload/collections/Pages'
 import { Mentors } from './payload/collections/Mentors'
 import { Audiences } from './payload/collections/Audiences'
 import { LegalDocuments } from './payload/collections/LegalDocuments'
@@ -33,6 +34,7 @@ export default buildConfig({
     Users,
     Domains,
     Audiences,
+    Pages,
     Products,
     Mentors,
     LegalDocuments,
