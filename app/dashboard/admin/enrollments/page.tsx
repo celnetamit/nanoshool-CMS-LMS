@@ -15,7 +15,14 @@ const PAYMENT_COLORS: Record<string, string> = {
   failed: 'badge-error', refunded: 'badge-neutral',
 }
 
-export default async function AdminEnrollmentsPage() {
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function AdminEnrollmentsPage({ searchParams }: Props) {
+  const parsedSearchParams = await searchParams
+  const q = (parsedSearchParams.q ?? '').toString().trim()
+
   let enrollments: {
     id: string; user_name: string; user_email: string; product_title: string;
     domain_name: string; access_status: string; payment_status: string;
@@ -24,6 +31,19 @@ export default async function AdminEnrollmentsPage() {
   }[] = []
 
   try {
+    const values: unknown[] = []
+    let filterSql = ''
+
+    if (q) {
+      values.push(`%${q}%`)
+      filterSql = `WHERE (
+        u.name ILIKE $1 OR
+        u.email ILIKE $1 OR
+        p.title ILIKE $1 OR
+        d.name ILIKE $1
+      )`
+    }
+
     enrollments = await query(
       `SELECT e.id, u.name AS user_name, u.email AS user_email,
               p.title AS product_title, d.name AS domain_name,
@@ -35,9 +55,10 @@ export default async function AdminEnrollmentsPage() {
        JOIN products p ON p.id = e.product_id
        JOIN domains d ON d.id = p.domain_id
        LEFT JOIN payments pay ON pay.id = e.payment_id
+       ${filterSql}
        ORDER BY e.created_at DESC
        LIMIT 100`,
-      []
+      values
     ) as unknown as typeof enrollments
   } catch { /* DB unavailable */ }
 
@@ -49,7 +70,16 @@ export default async function AdminEnrollmentsPage() {
           <p className={styles.subtitle}>{enrollments.length} total records (most recent 100)</p>
         </div>
         <div className={styles.headerActions}>
-          <input className="input" placeholder="Search by user or program..." style={{ width: 280 }} />
+          <form method="get" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <input
+              className="input"
+              name="q"
+              placeholder="Search by user or program..."
+              defaultValue={q}
+              style={{ width: 280 }}
+            />
+            <button type="submit" className="btn btn-secondary btn--sm">Search</button>
+          </form>
         </div>
       </div>
 

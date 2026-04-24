@@ -1,3 +1,5 @@
+import { withPayload } from '@payloadcms/next/withPayload'
+
 /** @type {import('next').NextConfig} */
 const useStandaloneOutput = process.env.NEXT_OUTPUT_STANDALONE === '1'
 
@@ -28,4 +30,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withPayload(nextConfig)

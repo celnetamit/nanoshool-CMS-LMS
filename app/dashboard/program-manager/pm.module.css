@@ -36,10 +36,15 @@
 .signout:hover { background: rgba(239,68,68,0.08); }
 .main {
   margin-left: 240px;
-  width: calc(100vw - 240px);
+  width: calc(100% - 240px);
   min-width: 0;
   padding: 2.5rem;
   min-height: 100vh;
+  overflow-x: auto;
+}
+
+.main > * {
+  width: min(100%, 1240px);
 }
 
 @media (max-width: 1024px) {

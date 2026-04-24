@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import styles from './search.module.css'
+import { PRODUCT_TYPE_SLUGS } from '@/types/routes'
+import type { ProductType } from '@/types'
 
 export default function SearchPage() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<{ hits: { id: string; title: string; type: string; domain: string; price: number; shortDescription?: string }[] } | null>(null)
+  const [results, setResults] = useState<{ hits: { id: string; slug?: string; title: string; type: string; domain: string; price: number; shortDescription?: string }[] } | null>(null)
   const [loading, setLoading] = useState(false)
 
   const handleSearch = async (q: string) => {
@@ -88,7 +90,11 @@ export default function SearchPage() {
             <p className={styles.resultCount}>{results.hits.length} result{results.hits.length !== 1 ? 's' : ''} for "{query}"</p>
             <div className={styles.resultsGrid}>
               {results.hits.map((hit) => (
-                <Link key={hit.id} href={`/${hit.domain}/${hit.type}/${hit.id}`} className={`card card--hover ${styles.resultCard}`}>
+                <Link
+                  key={hit.id}
+                  href={`/${hit.domain}/${PRODUCT_TYPE_SLUGS[hit.type as ProductType]?.detail ?? hit.type}/${hit.slug || hit.id}`}
+                  className={`card card--hover ${styles.resultCard}`}
+                >
                   <div className={styles.resultType}>{hit.type?.replace('_', ' ')}</div>
                   <h3 className={styles.resultTitle}>{hit.title}</h3>
                   {hit.shortDescription && <p className={styles.resultDesc}>{hit.shortDescription}</p>}

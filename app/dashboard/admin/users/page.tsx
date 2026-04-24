@@ -10,18 +10,34 @@ const ROLE_COLORS: Record<string, string> = {
   program_manager: 'badge-primary', participant: 'badge-neutral',
 }
 
-export default async function AdminUsersPage() {
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+export default async function AdminUsersPage({ searchParams }: Props) {
+  const parsedSearchParams = await searchParams
+  const q = (parsedSearchParams.q ?? '').toString().trim()
+
   let users: (DBUser & { enrollment_count: string })[] = []
 
   try {
+    const values: unknown[] = []
+    let filterSql = ''
+
+    if (q) {
+      values.push(`%${q}%`)
+      filterSql = `WHERE (u.name ILIKE $1 OR u.email ILIKE $1)`
+    }
+
     users = await query(
       `SELECT u.*, COUNT(e.id) AS enrollment_count
        FROM users u
        LEFT JOIN enrollments e ON e.user_id = u.id
+       ${filterSql}
        GROUP BY u.id
        ORDER BY u.created_at DESC
        LIMIT 100`,
-      []
+      values
     ) as unknown as typeof users
   } catch { /* DB unavailable */ }
 
@@ -32,7 +48,16 @@ export default async function AdminUsersPage() {
           <h1 className={styles.title}>Users</h1>
           <p className={styles.subtitle}>{users.length} registered users</p>
         </div>
-        <input className="input" placeholder="Search users..." style={{ width: 280 }} />
+        <form method="get" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <input
+            className="input"
+            name="q"
+            placeholder="Search users..."
+            defaultValue={q}
+            style={{ width: 280 }}
+          />
+          <button type="submit" className="btn btn-secondary btn--sm">Search</button>
+        </form>
       </div>
 
       <div className={`card ${styles.tableCard}`}>

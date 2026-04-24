@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/admin/enrollments', label: 'Enrollments', icon: '📚' },
   { href: '/dashboard/admin/payments', label: 'Payments', icon: '💳' },
   { href: '/dashboard/admin/coupons', label: 'Coupons', icon: '🎟️' },
+  { href: '/admin/collections/mentors', label: 'Mentors (CMS)', icon: '🧑‍🏫' },
   { href: '/admin/collections/pages', label: 'Pages (CMS)', icon: '📝' },
   { href: '/admin', label: 'Payload CMS', icon: '🔧' },
 ]

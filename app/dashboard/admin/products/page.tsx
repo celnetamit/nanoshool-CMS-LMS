@@ -36,11 +36,14 @@ export default async function AdminProductsPage() {
           <div className="card" style={{ padding: '1.25rem' }}>No products found.</div>
         ) : (
           products.map((item) => (
-            <div key={item.id} className="card" style={{ padding: '1rem 1.25rem' }}>
-              <strong>{item.title}</strong>
-              <div style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                {item.domain_name} · {item.type} · {item.status}
+            <div key={item.id} className="card" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div>
+                <strong>{item.title}</strong>
+                <div style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+                  {item.domain_name} · {item.type} · {item.status}
+                </div>
               </div>
+              <Link href={`/dashboard/admin/products/${item.id}/edit`} className="btn btn-secondary btn--sm">Edit</Link>
             </div>
           ))
         )}
@@ -48,4 +51,3 @@ export default async function AdminProductsPage() {
     </div>
   )
 }
-

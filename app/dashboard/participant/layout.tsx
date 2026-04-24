@@ -1,10 +1,16 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import styles from './dashboard.module.css'
+import { DASHBOARD_ROOT_BY_ROLE } from '@/types/routes'
+import type { UserRole } from '@/types'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user) redirect('/login?callbackUrl=/dashboard')
+  if (session.user.role !== 'participant') {
+    const target = DASHBOARD_ROOT_BY_ROLE[session.user.role as UserRole] ?? '/dashboard'
+    redirect(target)
+  }
 
   return (
     <div className={styles.layout}>

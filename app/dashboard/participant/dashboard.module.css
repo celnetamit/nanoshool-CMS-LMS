@@ -87,10 +87,15 @@
 /* ─── Main ──────────────────────────────────────── */
 .main {
   margin-left: 260px;
-  width: calc(100vw - 260px);
+  width: calc(100% - 260px);
   min-width: 0;
   padding: 2.5rem;
   min-height: 100vh;
+  overflow-x: auto;
+}
+
+.main > * {
+  width: min(100%, 1240px);
 }
 
 @media (max-width: 768px) {

@@ -6,18 +6,18 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 // Collections
-import { Users } from './payload/collections/Users'
-import { Domains } from './payload/collections/Domains'
-import { Products } from './payload/collections/Products'
-import { Pages } from './payload/collections/Pages'
-import { Mentors } from './payload/collections/Mentors'
-import { Audiences } from './payload/collections/Audiences'
-import { LegalDocuments } from './payload/collections/LegalDocuments'
-import { Media } from './payload/collections/Media'
+import { Users } from './payload/collections/Users.ts'
+import { Domains } from './payload/collections/Domains.ts'
+import { Products } from './payload/collections/Products.ts'
+import { Pages } from './payload/collections/Pages.ts'
+import { Mentors } from './payload/collections/Mentors.ts'
+import { Audiences } from './payload/collections/Audiences.ts'
+import { LegalDocuments } from './payload/collections/LegalDocuments.ts'
+import { Media } from './payload/collections/Media.ts'
 
 // Globals
-import { Navigation } from './payload/globals/Navigation'
-import { SiteSettings } from './payload/globals/SiteSettings'
+import { Navigation } from './payload/globals/Navigation.ts'
+import { SiteSettings } from './payload/globals/SiteSettings.ts'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -55,6 +55,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL,
     },
+    schemaName: 'payload',
   }),
 
   plugins: [
