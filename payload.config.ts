@@ -13,6 +13,8 @@ import { Pages } from './payload/collections/Pages'
 import { Mentors } from './payload/collections/Mentors'
 import { Audiences } from './payload/collections/Audiences'
 import { LegalDocuments } from './payload/collections/LegalDocuments'
+import { Partners } from './payload/collections/Partners'
+import { Testimonials } from './payload/collections/Testimonials'
 import { Media } from './payload/collections/Media'
 
 // Globals
@@ -38,6 +40,8 @@ export default buildConfig({
     Pages,
     Products,
     Mentors,
+    Partners,
+    Testimonials,
     LegalDocuments,
     Media,
   ],

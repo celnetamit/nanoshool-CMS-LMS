@@ -29,6 +29,17 @@ export const Domains: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'hero',
+      type: 'group',
+      fields: [
+        { name: 'eyebrow', type: 'text' },
+        { name: 'headline', type: 'text' },
+        { name: 'subheadline', type: 'textarea' },
+        { name: 'primaryCtaLabel', type: 'text' },
+        { name: 'primaryCtaUrl', type: 'text' },
+      ],
+    },
+    {
       name: 'overview',
       type: 'richText',
     },
@@ -52,6 +63,40 @@ export const Domains: CollectionConfig = {
       name: 'featuredMentors',
       type: 'relationship',
       relationTo: 'mentors',
+      hasMany: true,
+    },
+    {
+      name: 'highlights',
+      type: 'array',
+      fields: [
+        { name: 'title', type: 'text', required: true },
+        { name: 'description', type: 'textarea' },
+      ],
+    },
+    {
+      name: 'stats',
+      type: 'array',
+      fields: [
+        { name: 'label', type: 'text', required: true },
+        { name: 'value', type: 'text', required: true },
+      ],
+    },
+    {
+      name: 'audienceLinks',
+      type: 'relationship',
+      relationTo: 'audiences',
+      hasMany: true,
+    },
+    {
+      name: 'testimonialReferences',
+      type: 'relationship',
+      relationTo: 'testimonials',
+      hasMany: true,
+    },
+    {
+      name: 'partnerReferences',
+      type: 'relationship',
+      relationTo: 'partners',
       hasMany: true,
     },
     {

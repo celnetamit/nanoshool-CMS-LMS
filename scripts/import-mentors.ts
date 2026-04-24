@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { getPayload } from 'payload'
-import config from '@/payload.config'
+import config from '@payload-config'
 
 type DomainDoc = { id: string; name?: string; slug?: string }
 type MentorDoc = { id: string; slug?: string; name?: string }

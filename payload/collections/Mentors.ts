@@ -4,7 +4,10 @@ export const Mentors: CollectionConfig = {
   slug: 'mentors',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'domains'],
+    defaultColumns: ['name', 'slug', 'featured', 'displayOrder'],
+  },
+  versions: {
+    drafts: true,
   },
   fields: [
     { name: 'name', type: 'text', required: true },
@@ -15,6 +18,9 @@ export const Mentors: CollectionConfig = {
       unique: true,
     },
     { name: 'tagline', type: 'text' },
+    { name: 'designation', type: 'text' },
+    { name: 'organization', type: 'text' },
+    { name: 'shortBio', type: 'textarea', maxLength: 280 },
     { name: 'bio', type: 'richText' },
     { name: 'photo', type: 'upload', relationTo: 'media' },
     {
@@ -27,6 +33,26 @@ export const Mentors: CollectionConfig = {
       name: 'expertise',
       type: 'array',
       fields: [{ name: 'area', type: 'text', required: true }],
+    },
+    {
+      name: 'credentials',
+      type: 'array',
+      fields: [{ name: 'value', type: 'text', required: true }],
+    },
+    {
+      name: 'featured',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'showOnMentorsPage',
+      type: 'checkbox',
+      defaultValue: true,
+    },
+    {
+      name: 'displayOrder',
+      type: 'number',
+      defaultValue: 0,
     },
     {
       name: 'socialLinks',

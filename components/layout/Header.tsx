@@ -19,11 +19,50 @@ const AUDIENCES = [
   { label: 'Hiring Partners', slug: 'hiring-partners' },
 ]
 
+type AuthUser = {
+  role: 'admin' | 'mentor' | 'participant' | 'program_manager'
+}
+
+const DASHBOARD_BY_ROLE: Record<AuthUser['role'], string> = {
+  admin: '/dashboard/admin',
+  mentor: '/dashboard/mentor',
+  participant: '/dashboard/participant',
+  program_manager: '/dashboard/program-manager',
+}
+
 export function Header() {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [domainMenuOpen, setDomainMenuOpen] = useState(false)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadSession() {
+      try {
+        const response = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (!response.ok) {
+          if (active) setAuthUser(null)
+          return
+        }
+        const data = await response.json() as { role?: AuthUser['role'] }
+        if (active && data?.role && data.role in DASHBOARD_BY_ROLE) {
+          setAuthUser({ role: data.role })
+        }
+      } catch {
+        if (active) setAuthUser(null)
+      }
+    }
+
+    loadSession()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const dashboardHref = authUser ? DASHBOARD_BY_ROLE[authUser.role] : '/dashboard'
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -87,7 +126,14 @@ export function Header() {
 
           {/* CTA */}
           <div className={styles.cta}>
-            <Link href="/login" className="btn btn-ghost btn--sm">Log in</Link>
+            {authUser ? (
+              <>
+                <Link href={dashboardHref} className="btn btn-ghost btn--sm">Dashboard</Link>
+                <a href="/api/auth/signout" className="btn btn-secondary btn--sm">Sign out</a>
+              </>
+            ) : (
+              <Link href="/login" className="btn btn-ghost btn--sm">Log in</Link>
+            )}
             <Link href="/ai" className="btn btn-primary btn--sm">Get Started</Link>
           </div>
 
@@ -131,7 +177,14 @@ export function Header() {
             <Link href="/join-us" className={styles.mobileLink}>Join Us</Link>
           </div>
           <div className={styles.mobileCta}>
-            <Link href="/login" className="btn btn-secondary" style={{ width: '100%' }}>Log in</Link>
+            {authUser ? (
+              <>
+                <Link href={dashboardHref} className="btn btn-secondary" style={{ width: '100%' }}>Dashboard</Link>
+                <a href="/api/auth/signout" className="btn btn-ghost" style={{ width: '100%', textAlign: 'center', color: 'var(--color-error)' }}>Sign out</a>
+              </>
+            ) : (
+              <Link href="/login" className="btn btn-secondary" style={{ width: '100%' }}>Log in</Link>
+            )}
             <Link href="/ai" className="btn btn-primary" style={{ width: '100%' }}>Get Started →</Link>
           </div>
         </div>

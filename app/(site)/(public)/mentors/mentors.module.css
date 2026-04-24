@@ -1,0 +1,101 @@
+.page {
+  padding: 3.5rem 0 4rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.subtitle {
+  margin-top: 0.75rem;
+  max-width: 760px;
+  color: var(--color-text-muted);
+}
+
+.filters {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.filterChip {
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.filterChip:hover {
+  border-color: var(--color-border-light);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  padding: 1rem;
+  display: grid;
+  gap: 0.625rem;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #22d3ee);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  font-size: 1.05rem;
+}
+
+.tagline {
+  color: var(--color-text);
+}
+
+.bio {
+  color: var(--color-text-muted);
+  font-size: 0.925rem;
+}
+
+.chips,
+.domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.empty {
+  margin-top: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  padding: 1.5rem;
+}
+
+.empty p {
+  margin-top: 0.6rem;
+  color: var(--color-text-muted);
+}
+
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+}

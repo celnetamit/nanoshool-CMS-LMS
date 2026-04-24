@@ -191,7 +191,7 @@ export const Products: CollectionConfig = {
     afterChange: [
       async ({ doc }) => {
         try {
-          const { indexProduct, removeProductFromIndex } = await import('../../lib/search/index.ts')
+          const { indexProduct, removeProductFromIndex } = await import('../../lib/search/index')
           if (doc.status === 'published') {
             const domainSlug =
               typeof doc.domain === 'object' && doc.domain !== null
@@ -231,7 +231,7 @@ export const Products: CollectionConfig = {
     afterDelete: [
       async ({ id }) => {
         try {
-          const { removeProductFromIndex } = await import('../../lib/search/index.ts')
+          const { removeProductFromIndex } = await import('../../lib/search/index')
           if (typeof id === 'string') {
             await removeProductFromIndex(id)
             console.log(`[Search] Removed deleted product from index: ${id}`)

@@ -1,0 +1,59 @@
+.page {
+  padding: 3.5rem 0 4.5rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  max-width: 760px;
+  color: var(--color-text-muted);
+  line-height: 1.75;
+}
+
+.ctaRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.partnerType {
+  width: fit-content;
+}
+
+.partnerName {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.partnerDescription {
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.empty {
+  padding: 1.5rem;
+}
