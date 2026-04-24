@@ -1,4 +1,4 @@
-import config from '@/payload.config'
+import config from '@payload-config'
 import {
   REST_DELETE,
   REST_GET,

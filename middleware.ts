@@ -50,21 +50,76 @@ function shouldRewriteToCMS(pathname: string, method: string) {
 }
 
 async function readAuthToken(req: NextRequest) {
-  const secureCookie = req.nextUrl.protocol === 'https:'
-  const cookieName = secureCookie ? '__Secure-authjs.session-token' : 'authjs.session-token'
-
-  return getToken({
+  // Prefer default detection first so NextAuth can resolve cookie naming across envs.
+  const defaultToken = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
-    secureCookie,
-    cookieName,
   })
+  if (defaultToken) return defaultToken
+
+  // Fallbacks for deployments where proxy/protocol handling or version drift alters cookie names.
+  const fallbackCookies: Array<{ secureCookie: boolean; cookieName: string }> = [
+    { secureCookie: true, cookieName: '__Secure-authjs.session-token' },
+    { secureCookie: false, cookieName: 'authjs.session-token' },
+    { secureCookie: true, cookieName: '__Secure-next-auth.session-token' },
+    { secureCookie: false, cookieName: 'next-auth.session-token' },
+  ]
+
+  for (const entry of fallbackCookies) {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+      secureCookie: entry.secureCookie,
+      cookieName: entry.cookieName,
+    })
+    if (token) return token
+  }
+
+  return null
 }
 
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const token = await readAuthToken(req)
   const userRole = token?.role as UserRole | undefined
+  const requestHeaders = new Headers(req.headers)
+
+  if (token?.email) {
+    requestHeaders.set('x-nstc-auth-user-email', token.email)
+    requestHeaders.set('x-nstc-auth-user-role', userRole ?? 'participant')
+    requestHeaders.set('x-nstc-auth-user-name', token.name ?? '')
+  } else {
+    requestHeaders.delete('x-nstc-auth-user-email')
+    requestHeaders.delete('x-nstc-auth-user-role')
+    requestHeaders.delete('x-nstc-auth-user-name')
+  }
+
+  if (pathname === '/admin/login' || pathname === '/admin/create-first-user') {
+    if (!token) {
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', '/admin')
+      return NextResponse.redirect(loginUrl)
+    }
+
+    if (userRole && userRole !== 'admin') {
+      const target = DASHBOARD_ROOT_BY_ROLE[userRole] ?? '/dashboard'
+      return NextResponse.redirect(new URL(target, req.url))
+    }
+  }
+
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    if (!token) {
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname + req.nextUrl.search)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    if (userRole !== 'admin') {
+      const target = DASHBOARD_ROOT_BY_ROLE[userRole ?? 'participant'] ?? '/dashboard'
+      return NextResponse.redirect(new URL(target, req.url))
+    }
+
+  }
 
   // If user hits /dashboard, redirect to their role dashboard
   if (pathname === '/dashboard') {
@@ -97,17 +152,22 @@ export default async function middleware(req: NextRequest) {
   if (shouldRewriteToCMS(pathname, req.method)) {
     const rewriteUrl = req.nextUrl.clone()
     rewriteUrl.pathname = `/cms${pathname}`
-    return NextResponse.rewrite(rewriteUrl)
+    return NextResponse.rewrite(rewriteUrl, {
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
 
-  return NextResponse.next()
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 }
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
-    '/api/admin/:path*',
-    '/api/enroll',
-    '/api/enrollments/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
   ],
 }
