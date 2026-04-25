@@ -50,6 +50,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 # Needed by scripts/seed.js in standalone runtime image
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
+# Needed by scripts/seed-public-content.ts in standalone runtime image
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@esbuild/linux-x64 ./node_modules/@esbuild/linux-x64
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
 
 USER nextjs
 
