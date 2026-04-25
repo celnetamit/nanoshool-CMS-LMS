@@ -1,6 +1,5 @@
 import { extractPlainText } from './richText'
 import { getPublicPayload } from './payload'
-import type { ProductType } from '@/types'
 
 type AudienceDoc = {
   id: string
@@ -20,7 +19,7 @@ type AudienceDoc = {
           id: string
           title: string
           slug: string
-          type: ProductType
+          type: string
           shortDescription?: string | null
           price?: number | null
           salePrice?: number | null
