@@ -13,7 +13,7 @@
     "typecheck": "next build --experimental-build-mode compile --no-lint",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
-    "db:seed:public": "node -r ./scripts/patch-next-env.cjs --import tsx ./scripts/seed-public-content.ts",
+    "db:seed:public": "npm run db:migrate && node -r ./scripts/patch-next-env.cjs --import tsx ./scripts/seed-public-content.ts",
     "db:import:mentors": "npx tsx scripts/import-mentors.ts",
     "payload": "payload",
     "worker:moodle": "npx tsx lib/queues/worker.ts",
