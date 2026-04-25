@@ -1,4 +1,5 @@
 import { getPayload } from 'payload'
+import { Client } from 'pg'
 
 try {
   if (typeof process.loadEnvFile === 'function') {
@@ -19,6 +20,22 @@ type ProductDoc = DocWithId & {
   status?: string
   domain?: string | DomainDoc | null
   audiences?: Array<string | AudienceDoc> | null
+}
+
+type SqlSeedProduct = {
+  domainSlug: string
+  title: string
+  slug: string
+  type: 'course' | 'workshop' | 'internship' | 'flagship_program' | 'package'
+  shortDescription: string
+  longDescription: string
+  price: number
+  salePrice?: number | null
+  duration?: string | null
+  level?: 'beginner' | 'intermediate' | 'advanced' | null
+  format?: 'self_paced' | 'live_cohort' | 'hybrid' | null
+  certificate?: boolean
+  audiences: string[]
 }
 
 type LexicalNode = {
@@ -272,6 +289,20 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
         { title: 'Role-based learning', description: 'Shape learning journeys around functional team needs instead of generic catalogs.' },
         { title: 'Domain specialization', description: 'Choose high-value domain tracks aligned with business priorities.' },
       ],
+      faq: [
+        {
+          question: 'Can enterprise pathways be customized for different team functions?',
+          answer: buildLexicalParagraphs([
+            'Yes. Enterprise pathways are meant to support role-based capability plans instead of one-size-fits-all learning catalogs.',
+          ]),
+        },
+        {
+          question: 'Do these pathways support applied outcomes rather than content consumption only?',
+          answer: buildLexicalParagraphs([
+            'Yes. The positioning is deliberately practical so teams can connect learning to workflow, delivery, and workforce readiness.',
+          ]),
+        },
+      ],
       ctaText: 'Explore Enterprise Pathways',
       ctaUrl: '/enterprise',
       seo: {
@@ -291,6 +322,20 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
       valueProps: [
         { title: 'Institution-ready', description: 'Support structured academic partnerships and scalable program models.' },
         { title: 'Learner outcomes', description: 'Connect academic progression with workforce and research relevance.' },
+      ],
+      faq: [
+        {
+          question: 'Is this only for curriculum partnerships?',
+          answer: buildLexicalParagraphs([
+            'No. University pathways can also support mentorship, workshops, flagship initiatives, and institution-level collaboration models.',
+          ]),
+        },
+        {
+          question: 'Can universities use multiple domains at once?',
+          answer: buildLexicalParagraphs([
+            'Yes. The public model is designed to let institutions explore AI, Biotechnology, and Nanotechnology under one platform umbrella.',
+          ]),
+        },
       ],
       ctaText: 'Explore University Pathways',
       ctaUrl: '/university',
@@ -312,6 +357,20 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
         { title: 'Multiple formats', description: 'Choose between shorter learning experiences and deeper guided programs.' },
         { title: 'Applied orientation', description: 'Build capability that is easier to translate into internships, research, and career momentum.' },
       ],
+      faq: [
+        {
+          question: 'Are these programs beginner friendly?',
+          answer: buildLexicalParagraphs([
+            'Some are beginner-friendly and others are deeper specializations. The catalog is meant to support progression rather than a single learner stage.',
+          ]),
+        },
+        {
+          question: 'Can students move from short formats into deeper programs?',
+          answer: buildLexicalParagraphs([
+            'Yes. Workshops, courses, internships, and flagship programs are meant to create a more credible progression path.',
+          ]),
+        },
+      ],
       ctaText: 'Explore Student Programs',
       ctaUrl: '/students',
       seo: {
@@ -331,6 +390,20 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
       valueProps: [
         { title: 'Research-aware content', description: 'Designed for users who expect stronger scientific grounding.' },
         { title: 'Collaboration-ready positioning', description: 'Useful for advanced academic and institutional relationships.' },
+      ],
+      faq: [
+        {
+          question: 'Does this pathway prioritize academic depth?',
+          answer: buildLexicalParagraphs([
+            'Yes. This audience is positioned for users who care about stronger scientific grounding, advanced context, and research alignment.',
+          ]),
+        },
+        {
+          question: 'Can faculty use these pathways for collaboration as well as learning?',
+          answer: buildLexicalParagraphs([
+            'Yes. The pathway is meant to support research-facing learning, collaboration, and institutional engagement opportunities.',
+          ]),
+        },
       ],
       ctaText: 'Explore Advanced Tracks',
       ctaUrl: '/phd-professors',
@@ -352,6 +425,20 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
         { title: 'Domain-ready talent pools', description: 'Connect hiring intent with domain-focused skill development.' },
         { title: 'Stronger ecosystem fit', description: 'Use platform pathways to support long-term partnership and talent access.' },
       ],
+      faq: [
+        {
+          question: 'Is this page only for recruitment?',
+          answer: buildLexicalParagraphs([
+            'No. It also frames NSTC as a long-term capability partner, not just a one-time hiring source.',
+          ]),
+        },
+        {
+          question: 'Can hiring partners explore multiple domains from one surface?',
+          answer: buildLexicalParagraphs([
+            'Yes. Hiring partners can use this pathway to understand talent and program direction across all three core domains.',
+          ]),
+        },
+      ],
       ctaText: 'Explore Talent Pathways',
       ctaUrl: '/hiring-partners',
       seo: {
@@ -370,6 +457,14 @@ async function seedAudienceDocs(payload: Awaited<ReturnType<typeof getPayload>>)
       valueProps: [
         { title: 'High-signal positioning', description: 'Showcase why mentors matter to the platform’s credibility and outcomes.' },
         { title: 'Cross-domain opportunity', description: 'Connect mentors to domain-specific and audience-specific journeys.' },
+      ],
+      faq: [
+        {
+          question: 'Why is mentorship a public trust surface?',
+          answer: buildLexicalParagraphs([
+            'Mentorship is part of how the platform signals credibility, guidance, and stronger learner outcomes across complex domains.',
+          ]),
+        },
       ],
       ctaText: 'Meet Our Mentors',
       ctaUrl: '/mentors',
@@ -550,8 +645,9 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
     {
       slug: 'iit-delhi-collaboration',
       name: 'IIT Delhi',
+      website: 'https://home.iitd.ac.in/',
       partnerType: 'university',
-      shortDescription: 'Academic and research-aligned collaboration pathways for advanced technology learning.',
+      shortDescription: 'Academic and research-aligned collaboration supporting advanced technology programming, scientific credibility, and mentor-connected learning pathways.',
       featured: true,
       displayOrder: 1,
       status: 'published',
@@ -560,7 +656,7 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
       slug: 'industry-ai-collaboration-network',
       name: 'AI Industry Collaboration Network',
       partnerType: 'corporate',
-      shortDescription: 'Industry-facing collaboration model for future-ready AI learning pathways.',
+      shortDescription: 'Industry-facing collaboration model for applied AI capability building, live problem framing, and workflow-aware learning design.',
       featured: true,
       displayOrder: 2,
       status: 'published',
@@ -569,7 +665,7 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
       slug: 'biotech-research-partner-network',
       name: 'Biotech Research Partner Network',
       partnerType: 'research_lab',
-      shortDescription: 'Research-aware collaboration support for biotechnology programs and scientific capability building.',
+      shortDescription: 'Research-aware collaboration support for biotechnology programs, translational exposure, and scientific capability-building initiatives.',
       featured: true,
       displayOrder: 3,
       status: 'published',
@@ -578,7 +674,7 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
       slug: 'nano-innovation-ecosystem',
       name: 'Nano Innovation Ecosystem',
       partnerType: 'ecosystem_partner',
-      shortDescription: 'Innovation-oriented support for nanotechnology pathways and domain partnerships.',
+      shortDescription: 'Innovation-oriented support for nanotechnology pathways, application framing, and ecosystem-level domain partnerships.',
       featured: true,
       displayOrder: 4,
       status: 'published',
@@ -587,7 +683,7 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
       slug: 'future-skills-enterprise-forum',
       name: 'Future Skills Enterprise Forum',
       partnerType: 'corporate',
-      shortDescription: 'Enterprise collaboration support for role-based upskilling and workforce-readiness programs.',
+      shortDescription: 'Enterprise collaboration support for role-based upskilling, workforce-readiness programs, and capability planning across future-facing domains.',
       featured: true,
       displayOrder: 5,
       status: 'published',
@@ -596,7 +692,7 @@ async function seedPartners(payload: Awaited<ReturnType<typeof getPayload>>) {
       slug: 'advanced-science-university-consortium',
       name: 'Advanced Science University Consortium',
       partnerType: 'university',
-      shortDescription: 'Institutional collaboration model for curriculum enrichment, mentor access, and research-aware pathways.',
+      shortDescription: 'Institutional collaboration model for curriculum enrichment, mentor access, research-aware pathways, and cross-domain academic programming.',
       featured: true,
       displayOrder: 6,
       status: 'published',
@@ -706,8 +802,12 @@ async function seedLegalDocuments(payload: Awaited<ReturnType<typeof getPayload>
       version: 'v1.0',
       effectiveDate: new Date().toISOString(),
       content: buildLexicalParagraphs([
-        'This document explains the core payment expectations for NSTC products and services.',
-        'Payment completion, enrollment confirmation, and invoice generation are handled through the platform workflow.',
+        'Payments for NSTC programs are processed through the checkout flow shown on the relevant program page or enrollment surface.',
+        'Program access is confirmed only after successful payment authorization and the creation of a corresponding enrollment or payment record inside the platform.',
+        'Invoices, payment status, and support follow-up may depend on the learner account information supplied during checkout. Users are responsible for sharing accurate contact and billing details.',
+        'If a transaction appears successful at the banking layer but the platform does not confirm enrollment, users should contact support before attempting repeated payments.',
+        'For invoice corrections, payment confirmation delays, or other transaction-related questions, users should contact NSTC support with the registered email address and the relevant payment reference.',
+        'Published program pricing, discounts, taxes, and enrollment rules may change over time, but the terms shown at checkout are the terms used to evaluate the transaction at the moment of purchase.',
       ]),
       seo: {
         title: 'Payment Policy — NSTC',
@@ -720,8 +820,12 @@ async function seedLegalDocuments(payload: Awaited<ReturnType<typeof getPayload>
       version: 'v1.0',
       effectiveDate: new Date().toISOString(),
       content: buildLexicalParagraphs([
-        'This document outlines the high-level cancellation expectations for platform-linked programs and services.',
-        'Specific operational conditions may differ by product type, schedule, and institutional context.',
+        'Cancellation requests for instructor-led programs, internships, workshops, or bundled pathways are reviewed against the specific schedule, seat commitment, and delivery stage of the purchased program.',
+        'Requests raised before a cohort, workshop, or guided program begins are generally easier to review than requests submitted after content access, mentor coordination, or operational allocation has started.',
+        'Institutional or enterprise engagements may follow separately approved commercial terms when those terms differ from the default public checkout flow.',
+        'Users should submit cancellation questions in writing so the NSTC team can review the applicable program conditions and respond with the right next step.',
+        'A cancellation request does not automatically create a refund, transfer, or fee waiver unless that outcome is confirmed through the applicable program review.',
+        'Where a program reserves limited seats, mentor time, or operational onboarding capacity, the timing of the cancellation request can materially affect the options that remain available.',
       ]),
       seo: {
         title: 'Cancellation Policy — NSTC',
@@ -734,8 +838,12 @@ async function seedLegalDocuments(payload: Awaited<ReturnType<typeof getPayload>
       version: 'v1.0',
       effectiveDate: new Date().toISOString(),
       content: buildLexicalParagraphs([
-        'This document explains the high-level refund policy framework for NSTC products and platform interactions.',
-        'Refund eligibility may depend on product category, program schedule, and service state.',
+        'Refund eligibility depends on the kind of product purchased, the delivery stage of the program, and whether learner access or mentor-supported operations have already started.',
+        'Short-format workshops, digitally unlocked content, and scheduled cohort programs may follow different review criteria because resource allocation and access activation happen at different points in the journey.',
+        'Approved refunds are typically returned to the original payment method, subject to the processing timelines of the payment partner or banking network.',
+        'Refund requests that do not meet the applicable policy conditions may instead be handled through rescheduling, transfer review, or support-led resolution where appropriate.',
+        'Users seeking a refund review should include the program name, registered email address, payment reference, and a short explanation of the request so the NSTC team can assess the case quickly.',
+        'Submitting a refund request does not pause the underlying review timeline automatically unless NSTC confirms that the request has been accepted for formal processing.',
       ]),
       seo: {
         title: 'Refund Policy — NSTC',
@@ -748,8 +856,12 @@ async function seedLegalDocuments(payload: Awaited<ReturnType<typeof getPayload>
       version: 'v1.0',
       effectiveDate: new Date().toISOString(),
       content: buildLexicalParagraphs([
-        'This privacy policy describes how NSTC handles platform-related user information and operational data.',
-        'It should be reviewed and finalized with the exact production compliance language before go-live.',
+        'NSTC collects account, payment, enrollment, and program-interaction data required to operate the learning platform, support users, and deliver purchased services.',
+        'This information may be used for authentication, learner support, program administration, payments, analytics, compliance review, and product improvement across the platform experience.',
+        'Where mentors, institutional collaborators, or service providers are involved in program delivery, data access should be limited to the minimum operational information required for that workflow.',
+        'Users may contact NSTC support for questions related to stored personal information, platform communications, or operational privacy expectations.',
+        'This public policy copy is intended to describe the platform data model and operational expectations clearly; final production legal review should still align the wording with the organization’s formal compliance requirements.',
+        'Operational analytics or service logs may also be used to maintain platform reliability, investigate support issues, and improve the quality of the learner experience over time.',
       ]),
       seo: {
         title: 'Privacy Policy — NSTC',
@@ -762,7 +874,11 @@ async function seedLegalDocuments(payload: Awaited<ReturnType<typeof getPayload>
       version: 'v1.0',
       effectiveDate: new Date().toISOString(),
       content: buildLexicalParagraphs([
-        'This consent policy explains high-level consent expectations across platform usage, program participation, and operational workflows.',
+        'By using NSTC services, users acknowledge the platform workflows required for account access, payments, program participation, learner support, and operational communications.',
+        'Additional consent may be requested when a program involves mentor interaction, institutional coordination, learner outcome tracking, recordings, or other delivery-specific processes.',
+        'Users should review program details carefully before enrollment so that any program-specific expectations are understood before access is activated.',
+        'Where a program includes recordings, external tools, institution-linked delivery, or mentor feedback loops, continued participation may depend on accepting the relevant operational terms for that program format.',
+        'If a learner or collaborating organization does not agree with a required operational condition for a specific program format, participation may need to be paused or declined before access is activated.',
       ]),
       seo: {
         title: 'Consent Policy — NSTC',
@@ -837,6 +953,37 @@ async function seedPages(
           heading: 'Mentors and outcomes that make the platform credible',
         },
         {
+          blockType: 'mentorSpotlights',
+          kicker: 'Expert network',
+          heading: 'Guided by mentors who bridge theory, research, and execution',
+          body: 'The public experience should make mentor quality visible early, especially for complex domains where credibility matters.',
+        },
+        {
+          blockType: 'partnerLogos',
+          kicker: 'Institutional trust',
+          heading: 'Built with universities, research partners, and industry collaborators',
+          body: 'Trust surfaces should feel integrated into the platform story, not bolted on at the bottom of the page.',
+        },
+        {
+          blockType: 'faq',
+          kicker: 'FAQ',
+          heading: 'Common questions about the NanoSchool platform',
+          items: [
+            {
+              question: 'What makes NanoSchool different from a normal course catalog?',
+              answer: buildLexicalParagraphs([
+                'The public site is positioned as a capability-building platform that connects domain learning, mentorship, products, and institutional pathways.',
+              ]),
+            },
+            {
+              question: 'Who is the platform built for?',
+              answer: buildLexicalParagraphs([
+                'It is built for students, professionals, researchers, faculty, institutions, and ecosystem partners navigating applied science and emerging technology domains.',
+              ]),
+            },
+          ],
+        },
+        {
           blockType: 'ctaBanner',
           kicker: 'Next step',
           heading: 'Start building the next version of your capability stack.',
@@ -875,14 +1022,16 @@ async function seedPages(
       pageType: 'partner',
       title: 'Partners',
       excerpt:
-        'Institutional and industry partners collaborating with NSTC programs and learning pathways.',
+        'NSTC works with universities, research organizations, and enterprise collaborators to build credible domain programs, mentor-led pathways, and workforce-aligned learning experiences.',
       content: buildLexicalParagraphs([
-        'The partners page should communicate institutional and industry credibility with a cleaner platform structure.',
+        'The partners page should communicate institutional and industry credibility with a clearer collaboration story.',
+        'It should help organizations understand that NSTC is designed for long-term capability-building partnerships, not just one-off listing visibility.',
+        'The messaging should make it obvious that partnership can span curriculum, mentorship, institutional programming, and enterprise capability outcomes.',
       ]),
       status: 'published',
       seo: {
         title: 'Partners — NSTC',
-        description: 'Explore institutional and industry partners collaborating with NSTC.',
+        description: 'Explore the institutional, research, and enterprise partners helping shape NSTC programs and learning pathways.',
       },
     },
     {
@@ -891,14 +1040,16 @@ async function seedPages(
       pageType: 'generic',
       title: 'Legal',
       excerpt:
-        'Review legal policies, terms, and platform-related compliance documents.',
+        'Review the operating policies, learner-facing terms, and public legal documents that support NSTC platform usage.',
       content: buildLexicalParagraphs([
-        'The legal index should make policies easy to discover and review.',
+        'The legal index should make policies easy to discover, compare, and review before enrollment or partnership engagement.',
+        'These documents are structured to explain the main operational expectations of the platform in a clearer public-facing format.',
+        'They should help learners, institutions, and partners understand the trust model of the platform before they begin a deeper commercial or academic engagement.',
       ]),
       status: 'published',
       seo: {
         title: 'Legal — NSTC',
-        description: 'Review all legal policies, terms, and compliance documents.',
+        description: 'Review NSTC payment, refund, privacy, consent, and related platform policies.',
       },
     },
   ]
@@ -911,6 +1062,482 @@ async function seedPages(
       value: page.path,
       data: page,
     })
+  }
+}
+
+function buildSeedProducts(): SqlSeedProduct[] {
+  return [
+    {
+      domainSlug: 'ai',
+      title: 'Applied Machine Learning Foundations',
+      slug: 'ai-applied-machine-learning-foundations',
+      type: 'course',
+      shortDescription: 'Build practical AI literacy across data workflows, model training, evaluation, and real-world decision use cases.',
+      longDescription:
+        'This course helps learners move from basic machine learning theory into practical model-building, evaluation, and workflow literacy for real-world teams.',
+      price: 14999,
+      salePrice: 11999,
+      duration: '8 weeks',
+      level: 'beginner',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['students', 'enterprise', 'university'],
+    },
+    {
+      domainSlug: 'ai',
+      title: 'Generative AI Workflow Design Sprint',
+      slug: 'ai-generative-ai-workflow-design-sprint',
+      type: 'workshop',
+      shortDescription: 'A live workshop for designing prompt workflows, evaluation loops, and production-aware GenAI usage patterns.',
+      longDescription:
+        'This workshop is built for learners and teams who need stronger judgment around prompt systems, evaluation, orchestration, and applied AI delivery.',
+      price: 6999,
+      salePrice: 4999,
+      duration: '2 days',
+      level: 'intermediate',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['enterprise', 'students', 'hiring-partners'],
+    },
+    {
+      domainSlug: 'ai',
+      title: 'AI Systems Internship Track',
+      slug: 'ai-systems-internship-track',
+      type: 'internship',
+      shortDescription: 'Gain guided exposure to evaluation, workflow automation, and real AI delivery patterns in a mentored internship format.',
+      longDescription:
+        'The internship track helps learners build practical momentum through mentor-led project work, AI system thinking, and applied execution experience.',
+      price: 19999,
+      salePrice: 16999,
+      duration: '10 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'phd-professors', 'hiring-partners'],
+    },
+    {
+      domainSlug: 'ai',
+      title: 'AI Product and Leadership Flagship',
+      slug: 'ai-product-and-leadership-flagship',
+      type: 'flagship_program',
+      shortDescription: 'A flagship pathway for advanced AI strategy, model evaluation, and productization with mentor guidance.',
+      longDescription:
+        'This flagship program is designed for ambitious learners and teams who need a stronger bridge from experimentation into production-aware AI thinking.',
+      price: 44999,
+      salePrice: 38999,
+      duration: '16 weeks',
+      level: 'advanced',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['enterprise', 'students', 'phd-professors'],
+    },
+    {
+      domainSlug: 'ai',
+      title: 'AI Workforce Readiness Bundle',
+      slug: 'ai-workforce-readiness-bundle',
+      type: 'package',
+      shortDescription: 'A bundled pathway combining core AI learning, workshop depth, and project readiness for workforce preparation.',
+      longDescription:
+        'This package combines foundational learning, guided practice, and applied outcomes for users who need a more structured AI growth path.',
+      price: 52999,
+      salePrice: 44999,
+      duration: '20 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'enterprise', 'university'],
+    },
+    {
+      domainSlug: 'biotechnology',
+      title: 'Biotechnology and Bioinformatics Foundations',
+      slug: 'biotechnology-and-bioinformatics-foundations',
+      type: 'course',
+      shortDescription: 'Understand core biotech workflows, data interpretation, and modern bioinformatics fundamentals with applied context.',
+      longDescription:
+        'This course helps learners connect scientific concepts to practical biotechnology workflows, research readiness, and emerging industry relevance.',
+      price: 15999,
+      salePrice: 12999,
+      duration: '8 weeks',
+      level: 'beginner',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['students', 'university', 'phd-professors'],
+    },
+    {
+      domainSlug: 'biotechnology',
+      title: 'Translational Biotechnology Design Workshop',
+      slug: 'biotechnology-translational-design-workshop',
+      type: 'workshop',
+      shortDescription: 'A hands-on workshop on moving from research concepts into translational biotech problem framing and opportunity mapping.',
+      longDescription:
+        'The workshop focuses on translational thinking, applied biotech workflows, and the language needed to connect research depth with practical pathways.',
+      price: 7499,
+      salePrice: 5499,
+      duration: '2 days',
+      level: 'intermediate',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['university', 'enterprise', 'phd-professors'],
+    },
+    {
+      domainSlug: 'biotechnology',
+      title: 'Biotech Research Readiness Internship',
+      slug: 'biotech-research-readiness-internship',
+      type: 'internship',
+      shortDescription: 'Develop research-aware biotech capability through mentored project work and scientific workflow exposure.',
+      longDescription:
+        'This internship experience helps learners understand lab-to-application thinking, documentation rigor, and modern biotechnology workflow expectations.',
+      price: 21999,
+      salePrice: 18999,
+      duration: '10 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'phd-professors', 'university'],
+    },
+    {
+      domainSlug: 'biotechnology',
+      title: 'Biotechnology Innovation Flagship',
+      slug: 'biotechnology-innovation-flagship',
+      type: 'flagship_program',
+      shortDescription: 'An advanced flagship program connecting biotechnology depth, translational relevance, and guided mentor support.',
+      longDescription:
+        'The flagship track is designed for serious learners and institutional collaborators who want more depth than a standalone short-format course.',
+      price: 46999,
+      salePrice: 40999,
+      duration: '16 weeks',
+      level: 'advanced',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['university', 'enterprise', 'phd-professors'],
+    },
+    {
+      domainSlug: 'biotechnology',
+      title: 'Biotech Career Acceleration Bundle',
+      slug: 'biotech-career-acceleration-bundle',
+      type: 'package',
+      shortDescription: 'A package combining biotech foundations, translational thinking, and mentored career-facing capability building.',
+      longDescription:
+        'This bundle is structured for learners who need a credible, guided path from scientific interest to stronger research and career readiness.',
+      price: 54999,
+      salePrice: 46999,
+      duration: '20 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'university', 'hiring-partners'],
+    },
+    {
+      domainSlug: 'nanotechnology',
+      title: 'Nanotechnology Foundations and Applications',
+      slug: 'nanotechnology-foundations-and-applications',
+      type: 'course',
+      shortDescription: 'Learn nanoscale science fundamentals, materials concepts, and applied innovation pathways in a modernized learning format.',
+      longDescription:
+        'This course helps learners understand nanotechnology through a mix of scientific grounding, applied context, and clearer pathway design.',
+      price: 15499,
+      salePrice: 12499,
+      duration: '8 weeks',
+      level: 'beginner',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['students', 'university', 'phd-professors'],
+    },
+    {
+      domainSlug: 'nanotechnology',
+      title: 'Nano Innovation Systems Workshop',
+      slug: 'nano-innovation-systems-workshop',
+      type: 'workshop',
+      shortDescription: 'A workshop on nanoscale innovation, materials thinking, and translating deep-science ideas into clearer application paths.',
+      longDescription:
+        'This workshop gives learners a practical way to frame nanotechnology applications, innovation signals, and scientific-commercialization context.',
+      price: 7299,
+      salePrice: 5199,
+      duration: '2 days',
+      level: 'intermediate',
+      format: 'live_cohort',
+      certificate: true,
+      audiences: ['students', 'enterprise', 'phd-professors'],
+    },
+    {
+      domainSlug: 'nanotechnology',
+      title: 'Nanomaterials Internship Studio',
+      slug: 'nanomaterials-internship-studio',
+      type: 'internship',
+      shortDescription: 'A mentored internship pathway focused on nanomaterials exploration, documentation, and innovation-oriented project work.',
+      longDescription:
+        'The internship studio helps learners turn deep-science interest into more structured project experience and domain progression.',
+      price: 20999,
+      salePrice: 17999,
+      duration: '10 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'phd-professors', 'hiring-partners'],
+    },
+    {
+      domainSlug: 'nanotechnology',
+      title: 'Nanotechnology Research and Innovation Flagship',
+      slug: 'nanotechnology-research-and-innovation-flagship',
+      type: 'flagship_program',
+      shortDescription: 'An advanced flagship track for nanotechnology learners who want stronger research depth and innovation framing.',
+      longDescription:
+        'This flagship pathway combines deep-science grounding, mentor support, and a clearer innovation lens for long-form learning journeys.',
+      price: 45999,
+      salePrice: 39999,
+      duration: '16 weeks',
+      level: 'advanced',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['phd-professors', 'university', 'enterprise'],
+    },
+    {
+      domainSlug: 'nanotechnology',
+      title: 'Nano Career and Innovation Bundle',
+      slug: 'nano-career-and-innovation-bundle',
+      type: 'package',
+      shortDescription: 'A structured nanotechnology package that combines foundational learning, mentoring, and application-aware progression.',
+      longDescription:
+        'The bundle is designed to make nanotechnology pathways feel more coherent, guided, and workforce-aware for long-term learners.',
+      price: 53999,
+      salePrice: 45999,
+      duration: '20 weeks',
+      level: 'intermediate',
+      format: 'hybrid',
+      certificate: true,
+      audiences: ['students', 'university', 'enterprise'],
+    },
+  ]
+}
+
+function buildProductRichText(product: SqlSeedProduct) {
+  return buildLexicalParagraphs([
+    product.longDescription,
+    'Learners are expected to move from understanding the domain into clearer workflow judgment, mentor-supported practice, and stronger program outcomes.',
+  ])
+}
+
+function buildProductCurriculum(product: SqlSeedProduct) {
+  return [
+    {
+      moduleTitle: 'Foundations and framing',
+      lessons: [
+        { title: `${product.title} orientation`, duration: '45 min' },
+        { title: 'Core concepts and terminology', duration: '60 min' },
+      ],
+    },
+    {
+      moduleTitle: 'Applied workflows',
+      lessons: [
+        { title: 'Real-world workflow walkthroughs', duration: '75 min' },
+        { title: 'Decision making and applied practice', duration: '90 min' },
+      ],
+    },
+    {
+      moduleTitle: 'Outcomes and progression',
+      lessons: [
+        { title: 'Mentor review and feedback', duration: '60 min' },
+        { title: 'Next-step roadmap', duration: '45 min' },
+      ],
+    },
+  ]
+}
+
+async function seedProducts(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  domainsBySlug: Map<string, DomainDoc>,
+  audiencesBySlug: Map<string, AudienceDoc>,
+  mentorsBySlug: Map<string, MentorDoc>
+) {
+  const sqlConnectionString = process.env.DATABASE_URL
+  if (!sqlConnectionString) {
+    throw new Error('[db:seed:public] DATABASE_URL is not set')
+  }
+
+  const productSeeds = buildSeedProducts()
+  const sql = new Client({ connectionString: sqlConnectionString })
+  await sql.connect()
+
+  try {
+    const sqlDomainRows = await sql.query<{ id: string; slug: string; name: string }>(
+      `INSERT INTO domains (name, slug, description)
+       VALUES
+         ('Artificial Intelligence', 'ai', 'Courses, programs, and internships in AI and Machine Learning'),
+         ('Biotechnology', 'biotechnology', 'Learn biotechnology, genomics, and life sciences'),
+         ('Nanotechnology', 'nanotechnology', 'Explore nanotechnology and materials science')
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id, slug, name`
+    )
+
+    const sqlAudienceRows = await sql.query<{ id: string; slug: string; name: string }>(
+      `INSERT INTO audiences (name, slug)
+       VALUES
+         ('Enterprise', 'enterprise'),
+         ('University', 'university'),
+         ('Students', 'students'),
+         ('PhD & Professors', 'phd-professors'),
+         ('Hiring Partners', 'hiring-partners'),
+         ('Mentors', 'mentors')
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id, slug, name`
+    )
+
+    const sqlDomainsBySlug = new Map(sqlDomainRows.rows.map((row) => [row.slug, row]))
+    const sqlAudiencesBySlug = new Map(sqlAudienceRows.rows.map((row) => [row.slug, row]))
+
+    const mentorIdsByDomain: Record<string, string[]> = {
+      ai: ['dr-aisha-mehra', 'dr-karan-malhotra']
+        .map((slug) => mentorsBySlug.get(slug)?.id)
+        .filter(Boolean) as string[],
+      biotechnology: ['dr-rohan-kapoor', 'dr-isha-banerjee']
+        .map((slug) => mentorsBySlug.get(slug)?.id)
+        .filter(Boolean) as string[],
+      nanotechnology: ['dr-neha-sen', 'dr-vivek-raman']
+        .map((slug) => mentorsBySlug.get(slug)?.id)
+        .filter(Boolean) as string[],
+    }
+
+    const payloadProductsByDomain = new Map<string, string[]>()
+
+    for (const product of productSeeds) {
+      const payloadDomain = domainsBySlug.get(product.domainSlug)
+      const sqlDomain = sqlDomainsBySlug.get(product.domainSlug)
+      if (!payloadDomain || !sqlDomain) continue
+
+      const payloadAudienceIds = product.audiences
+        .map((slug) => audiencesBySlug.get(slug)?.id)
+        .filter(Boolean) as string[]
+      const payloadMentorIds = mentorIdsByDomain[product.domainSlug] ?? []
+
+      const payloadDoc = await upsertByUniqueField<ProductDoc>({
+        payload,
+        collection: 'products',
+        field: 'slug',
+        value: product.slug,
+        data: {
+          title: product.title,
+          slug: product.slug,
+          domain: payloadDomain.id,
+          type: product.type,
+          audiences: payloadAudienceIds,
+          mentors: payloadMentorIds,
+          shortDescription: product.shortDescription,
+          longDescription: buildProductRichText(product),
+          curriculum: buildProductCurriculum(product),
+          learningOutcomes: [
+            { outcome: 'Build stronger domain vocabulary and practical workflow literacy.' },
+            { outcome: 'Understand how mentors, projects, and product formats fit into progression.' },
+            { outcome: 'Translate learning into clearer next-step academic or workforce outcomes.' },
+          ],
+          prerequisites: [
+            { prerequisite: 'A working interest in the domain and willingness to engage in applied learning.' },
+            { prerequisite: 'Basic comfort with structured study, mentor feedback, and guided project work.' },
+          ],
+          faqs: [
+            {
+              question: 'Who is this product best suited for?',
+              answer: buildLexicalParagraphs([
+                'This product is designed for users who want more than awareness-level exposure and need clearer capability progression.',
+              ]),
+            },
+            {
+              question: 'What will learners leave with?',
+              answer: buildLexicalParagraphs([
+                'Learners should leave with stronger practical judgment, clearer domain framing, and a more structured next-step path.',
+              ]),
+            },
+          ],
+          price: product.price,
+          salePrice: product.salePrice ?? undefined,
+          duration: product.duration,
+          level: product.level ?? undefined,
+          format: product.format ?? undefined,
+          certificate: Boolean(product.certificate),
+          relatedProducts: [],
+          seo: {
+            title: `${product.title} — NSTC`,
+            description: product.shortDescription,
+          },
+          status: 'published',
+        },
+      })
+
+      if (!payloadProductsByDomain.has(product.domainSlug)) {
+        payloadProductsByDomain.set(product.domainSlug, [])
+      }
+      payloadProductsByDomain.get(product.domainSlug)!.push(payloadDoc.id)
+
+      const sqlProduct = await sql.query<{ id: string }>(
+        `INSERT INTO products (
+           domain_id, title, slug, type, short_description, long_description,
+           price, sale_price, duration, level, format, certificate, status, updated_at
+         )
+         VALUES (
+           $1, $2, $3, $4, $5, $6,
+           $7, $8, $9, $10, $11, $12, 'published', NOW()
+         )
+         ON CONFLICT (domain_id, type, slug) DO UPDATE
+         SET title = EXCLUDED.title,
+             short_description = EXCLUDED.short_description,
+             long_description = EXCLUDED.long_description,
+             price = EXCLUDED.price,
+             sale_price = EXCLUDED.sale_price,
+             duration = EXCLUDED.duration,
+             level = EXCLUDED.level,
+             format = EXCLUDED.format,
+             certificate = EXCLUDED.certificate,
+             status = EXCLUDED.status,
+             updated_at = NOW()
+         RETURNING id`,
+        [
+          sqlDomain.id,
+          product.title,
+          product.slug,
+          product.type,
+          product.shortDescription,
+          product.longDescription,
+          product.price,
+          product.salePrice ?? null,
+          product.duration ?? null,
+          product.level ?? null,
+          product.format ?? null,
+          Boolean(product.certificate),
+        ]
+      )
+
+      const sqlProductId = sqlProduct.rows[0]?.id
+      if (!sqlProductId) continue
+
+      await sql.query(`DELETE FROM product_audiences WHERE product_id = $1`, [sqlProductId])
+      for (const audienceSlug of product.audiences) {
+        const sqlAudience = sqlAudiencesBySlug.get(audienceSlug)
+        if (!sqlAudience) continue
+        await sql.query(
+          `INSERT INTO product_audiences (product_id, audience_id)
+           VALUES ($1, $2)
+           ON CONFLICT (product_id, audience_id) DO NOTHING`,
+          [sqlProductId, sqlAudience.id]
+        )
+      }
+    }
+
+    for (const relatedIds of payloadProductsByDomain.values()) {
+      for (let index = 0; index < relatedIds.length; index += 1) {
+        const current = relatedIds[index]
+        const related = relatedIds.filter((id) => id !== current).slice(0, 3)
+        await payload.update({
+          collection: 'products',
+          id: current,
+          data: {
+            relatedProducts: related,
+          },
+          depth: 0,
+          overrideAccess: true,
+        })
+      }
+    }
+  } finally {
+    await sql.end()
   }
 }
 
@@ -934,11 +1561,29 @@ async function linkRelationships(
   const products = productsResult.docs as ProductDoc[]
 
   const productsByDomain = new Map<string, string[]>()
+  const productsByAudience = new Map<string, string[]>()
+  const productsByAudienceAndDomain = new Map<string, Map<string, string[]>>()
   for (const product of products) {
     const domainId = getRelationshipId(product.domain)
     if (!domainId) continue
     if (!productsByDomain.has(domainId)) productsByDomain.set(domainId, [])
     productsByDomain.get(domainId)!.push(product.id)
+
+    for (const audience of product.audiences ?? []) {
+      const audienceId = getRelationshipId(audience)
+      if (!audienceId) continue
+
+      if (!productsByAudience.has(audienceId)) productsByAudience.set(audienceId, [])
+      productsByAudience.get(audienceId)!.push(product.id)
+
+      if (!productsByAudienceAndDomain.has(audienceId)) {
+        productsByAudienceAndDomain.set(audienceId, new Map<string, string[]>())
+      }
+
+      const byDomain = productsByAudienceAndDomain.get(audienceId)!
+      if (!byDomain.has(domainId)) byDomain.set(domainId, [])
+      byDomain.get(domainId)!.push(product.id)
+    }
   }
 
   const allAudienceIds = Array.from(audiencesBySlug.values()).map((audience) => audience.id)
@@ -984,15 +1629,6 @@ async function linkRelationships(
     }
   }
 
-  const audienceProductMap: Record<string, string[]> = {
-    enterprise: products.slice(0, 3).map((product) => product.id),
-    university: products.slice(0, 3).map((product) => product.id),
-    students: products.slice(0, 4).map((product) => product.id),
-    'phd-professors': products.slice(0, 3).map((product) => product.id),
-    'hiring-partners': products.slice(0, 3).map((product) => product.id),
-    mentors: products.slice(0, 2).map((product) => product.id),
-  }
-
   const mentorResult = await payload.find({
     collection: 'mentors',
     depth: 0,
@@ -1000,16 +1636,37 @@ async function linkRelationships(
     pagination: false,
     overrideAccess: true,
   })
-  const mentorIds = mentorResult.docs.map((doc) => doc.id)
+  const mentorDocs = mentorResult.docs as MentorDoc[]
+  const mentorIdsByDomain = new Map<string, string[]>()
 
-  for (const [slug, audience] of audiencesBySlug.entries()) {
-    const featuredProducts = audienceProductMap[slug] ?? []
+  for (const mentor of mentorDocs) {
+    for (const domain of mentor.domains ?? []) {
+      const domainId = getRelationshipId(domain)
+      if (!domainId) continue
+      if (!mentorIdsByDomain.has(domainId)) mentorIdsByDomain.set(domainId, [])
+      mentorIdsByDomain.get(domainId)!.push(mentor.id)
+    }
+  }
+
+  for (const [, audience] of audiencesBySlug.entries()) {
+    const featuredProducts = (productsByAudience.get(audience.id) ?? []).slice(0, 4)
+    const audienceDomains = Array.from((productsByAudienceAndDomain.get(audience.id) ?? new Map()).keys())
+    const featuredMentors = Array.from(
+      new Set(audienceDomains.flatMap((domainId) => mentorIdsByDomain.get(domainId) ?? []))
+    ).slice(0, 3)
+    const domainOverrides = audienceDomains.map((domainId) => ({
+      domain: domainId,
+      featuredProducts: (productsByAudienceAndDomain.get(audience.id)?.get(domainId) ?? []).slice(0, 3),
+      featuredMentors: (mentorIdsByDomain.get(domainId) ?? []).slice(0, 3),
+    }))
+
     await payload.update({
       collection: 'audiences',
       id: audience.id,
       data: {
         featuredProducts,
-        featuredMentors: mentorIds.slice(0, 3),
+        featuredMentors,
+        domainOverrides,
         status: 'published',
       },
       depth: 0,
@@ -1026,9 +1683,10 @@ async function main() {
 
   const domainsBySlug = await seedDomains(payload)
   const audiencesBySlug = await seedAudienceDocs(payload)
-  await seedMentors(payload, domainsBySlug)
+  const mentorsBySlug = await seedMentors(payload, domainsBySlug)
   const partnerIds = await seedPartners(payload)
   const testimonialIds = await seedTestimonials(payload, domainsBySlug)
+  await seedProducts(payload, domainsBySlug, audiencesBySlug, mentorsBySlug)
   await seedLegalDocuments(payload)
   await seedPages(payload, audiencesBySlug)
   await linkRelationships(payload, domainsBySlug, audiencesBySlug, partnerIds, testimonialIds)

@@ -15,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackDescription:
       result?.plainContent ||
       'Research collaboration and advanced domain learning tracks for PhD scholars and professors.',
+    canonicalPath: '/phd-professors',
   })
 }
 

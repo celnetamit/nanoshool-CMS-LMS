@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackTitle: 'University Programs — NSTC',
     fallbackDescription:
       result?.plainContent || 'Academic partnerships, curriculum support, and university-focused learning tracks.',
+    canonicalPath: '/university',
   })
 }
 

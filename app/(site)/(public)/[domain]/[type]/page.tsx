@@ -27,6 +27,12 @@ const TYPE_LABELS: Record<string, string> = {
 type Props = { params: Promise<{ domain: string; type: string }> }
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
+const DOMAIN_LABELS: Record<string, string> = {
+  ai: 'AI',
+  biotechnology: 'Biotechnology',
+  nanotechnology: 'Nanotechnology',
+}
+
 function toArray(value: string | string[] | undefined): string[] {
   if (!value) return []
   return Array.isArray(value) ? value : [value]
@@ -41,17 +47,18 @@ function parseOptionalNumber(value: string | string[] | undefined): number | nul
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { domain, type } = await params
+  const domainLabel = DOMAIN_LABELS[domain] || domain
   if (AUDIENCE_LABELS[type]) {
     const audience = AUDIENCE_LABELS[type]
     return {
-      title: `${audience} Programs in ${domain.charAt(0).toUpperCase() + domain.slice(1)}`,
+      title: `${audience} Programs in ${domainLabel}`,
       description: `Explore NSTC offerings for ${audience.toLowerCase()} in ${domain}.`,
     }
   }
 
   const label = TYPE_LABELS[type] || type
   return {
-    title: `${label} in ${domain.charAt(0).toUpperCase() + domain.slice(1)}`,
+    title: `${label} in ${domainLabel}`,
     description: `Browse ${label.toLowerCase()} in the ${domain} domain at NSTC.`,
   }
 }
@@ -62,7 +69,7 @@ export default async function ProductListingPage({ params, searchParams }: Props
   if (!VALID_DOMAINS.includes(domain)) notFound()
   if (!TYPE_MAP[type] && !AUDIENCE_LABELS[type]) notFound()
 
-  const domainLabel = domain.charAt(0).toUpperCase() + domain.slice(1)
+  const domainLabel = DOMAIN_LABELS[domain] || domain
 
   if (AUDIENCE_LABELS[type]) {
     const audience = AUDIENCE_LABELS[type]

@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackTitle: 'Student Programs — NSTC',
     fallbackDescription:
       result?.plainContent || 'Career-oriented programs and internships for students across emerging domains.',
+    canonicalPath: '/students',
   })
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getPublicSiteUrl, normalizeMetadataTitle } from '@/lib/site/publicSite'
 
 type SeoLike = {
   title?: string | null
@@ -28,17 +29,19 @@ export function buildSeoMetadata({
   fallbackDescription,
   canonicalPath,
 }: BuildSeoMetadataInput): Metadata {
-  const metadataBase = new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
-  const canonical = canonicalPath ? new URL(canonicalPath, metadataBase).toString() : undefined
+  const metadataBase = getPublicSiteUrl() ?? undefined
+  const canonical = metadataBase && canonicalPath ? new URL(canonicalPath, metadataBase).toString() : undefined
   const ogImage = resolveOgImage(seo?.ogImage)
+  const title = normalizeMetadataTitle(seo?.title || fallbackTitle)
+  const description = seo?.description || fallbackDescription
 
   return {
-    title: seo?.title || fallbackTitle,
-    description: seo?.description || fallbackDescription,
+    title,
+    description,
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
-      title: seo?.title || fallbackTitle,
-      description: seo?.description || fallbackDescription,
+      title,
+      description,
       url: canonical,
       images: ogImage ? [{ url: ogImage }] : undefined,
     },

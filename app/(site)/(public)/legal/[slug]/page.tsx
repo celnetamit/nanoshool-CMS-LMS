@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     seo: doc.seo,
     fallbackTitle: doc.title,
     fallbackDescription: extractPlainText(doc.content).slice(0, 160) || doc.title,
+    canonicalPath: `/legal/${slug}`,
   })
 }
 

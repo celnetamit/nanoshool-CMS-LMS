@@ -15,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackDescription:
       result?.plainContent ||
       'Discover and hire job-ready learners trained in high-impact science and technology domains.',
+    canonicalPath: '/hiring-partners',
   })
 }
 

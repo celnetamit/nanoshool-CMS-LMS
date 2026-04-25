@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackTitle: 'Enterprise Programs — NSTC',
     fallbackDescription:
       result?.plainContent || 'Upskill enterprise teams with domain-specific science and technology programs.',
+    canonicalPath: '/enterprise',
   })
 }
 

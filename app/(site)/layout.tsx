@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import '@/styles/globals.css'
+import { getPublicSiteUrl } from '@/lib/site/publicSite'
+
+const metadataBase = getPublicSiteUrl() ?? undefined
 
 export const metadata: Metadata = {
   title: {
@@ -8,7 +11,7 @@ export const metadata: Metadata = {
   },
   description:
     'Accelerate your career with industry-led programs in AI, Biotechnology, and Nanotechnology. Learn from top mentors, earn certificates, and get job-ready.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase,
   openGraph: {
     type: 'website',
     siteName: 'NSTC',

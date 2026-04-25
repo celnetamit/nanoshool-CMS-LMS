@@ -14,7 +14,7 @@ const COMPANY_LINKS = [
   { label: 'Mentors', href: '/mentors' },
   { label: 'Partners', href: '/partners' },
   { label: 'Join Us', href: '/join-us' },
-  { label: 'Blog', href: '/blog' },
+  { label: 'Legal', href: '/legal' },
 ]
 
 const AUDIENCE_LINKS = [
@@ -66,19 +66,9 @@ export function Footer() {
                 Accelerate your career with industry-led programs in emerging science & technology.
               </p>
               <div className={styles.socials}>
-                {[
-                  { icon: 'linkedin', href: '#', label: 'LinkedIn' },
-                  { icon: 'twitter', href: '#', label: 'Twitter' },
-                  { icon: 'youtube', href: '#', label: 'YouTube' },
-                  { icon: 'instagram', href: '#', label: 'Instagram' },
-                ].map((s) => (
-                  <a key={s.icon} href={s.href} aria-label={s.label} className={styles.socialBtn}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <rect width="24" height="24" rx="4" fillOpacity="0" />
-                      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12c0-5.523-4.477-10-10-10z" />
-                    </svg>
-                  </a>
-                ))}
+                <a href="mailto:support@nanostc.org" className={styles.footerLink}>support@nanostc.org</a>
+                <Link href="/partners" className={styles.footerLink}>Partnership enquiries</Link>
+                <Link href="/join-us" className={styles.footerLink}>Mentor and team applications</Link>
               </div>
             </div>
 

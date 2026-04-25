@@ -14,6 +14,32 @@ type AudienceDoc = {
     headline?: string | null
     subheadline?: string | null
     landingContent?: unknown
+    featuredProducts?:
+      | Array<{
+          id: string
+          title: string
+          slug: string
+          type: string
+          shortDescription?: string | null
+          price?: number | null
+          salePrice?: number | null
+          duration?: string | null
+          level?: string | null
+          format?: string | null
+          certificate?: boolean | null
+          domain?: { name?: string | null; slug?: string | null } | string | null
+        }>
+      | null
+    featuredMentors?:
+      | Array<{
+          id: string
+          name: string
+          tagline?: string | null
+          shortBio?: string | null
+          designation?: string | null
+          organization?: string | null
+        }>
+      | null
   }> | null
 }
 
