@@ -46,10 +46,24 @@
 
 .tableRow:hover { background: var(--color-bg-elevated); }
 
-.invoiceId { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text); }
+.invoiceId {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+.invoiceTitle {
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: normal;
+}
 .amount { font-weight: 600; }
 .date { color: var(--color-text-muted); }
 .pending { font-size: 0.8125rem; color: var(--color-text-subtle); }
+.actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
 @media (max-width: 768px) {
   .tableHeader { grid-template-columns: 1fr 1fr; }

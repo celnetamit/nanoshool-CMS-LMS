@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import { queryOne, query } from '@/lib/db'
 import { auth } from '@/lib/auth'
+import { buildSeoMetadata } from '@/lib/cms/public/getSeoMetadata'
+import { checkAccess } from '@/services/enrollment.service'
 import { CheckoutTrigger } from '@/components/checkout/CheckoutTrigger'
 import config from '@payload-config'
 import styles from './product.module.css'
@@ -15,6 +18,17 @@ const TYPE_MAP: Record<string, string> = {
 }
 
 type Props = { params: Promise<{ domain: string; type: string; slug: string }> }
+
+type PayloadMedia = {
+  url?: string | null
+  alt?: string | null
+}
+
+type PayloadAudience = {
+  id: string
+  slug?: string | null
+  name?: string | null
+}
 
 type PayloadDomainRef = {
   id: string
@@ -37,6 +51,7 @@ type PayloadProduct = {
   type: string
   shortDescription?: string | null
   longDescription?: unknown
+  heroImage?: PayloadMedia | string | null
   curriculum?: {
     id?: string | null
     moduleTitle?: string | null
@@ -46,6 +61,7 @@ type PayloadProduct = {
   prerequisites?: { id?: string | null; prerequisite?: string | null }[] | null
   faqs?: { id?: string | null; question?: string | null; answer?: unknown }[] | null
   mentors?: PayloadMentor[] | null
+  audiences?: PayloadAudience[] | null
   relatedProducts?: {
     id: string
     title: string
@@ -55,6 +71,11 @@ type PayloadProduct = {
     domain?: PayloadDomainRef
   }[] | null
   domain?: PayloadDomainRef
+  seo?: {
+    title?: string | null
+    description?: string | null
+    ogImage?: PayloadMedia | string | null
+  } | null
 }
 
 function getRelationshipSlug(value: PayloadDomainRef): string | undefined {
@@ -92,9 +113,50 @@ function extractPlainText(value: unknown): string {
   return chunks.join(' ').replace(/\s+/g, ' ').trim()
 }
 
+function resolveMedia(value: PayloadMedia | string | null | undefined): PayloadMedia | null {
+  if (!value || typeof value === 'string' || !value.url) return null
+  return value
+}
+
+async function getPayloadProduct(slug: string, dbType: string, domain: string): Promise<PayloadProduct | null> {
+  try {
+    const payload = await getPayload({ config })
+    const result = await payload.find({
+      collection: 'products',
+      where: {
+        slug: { equals: slug },
+        type: { equals: dbType },
+        status: { equals: 'published' },
+      },
+      depth: 2,
+      limit: 1,
+    })
+
+    const candidate = result.docs[0] as PayloadProduct | undefined
+    if (candidate && getRelationshipSlug(candidate.domain) === domain) {
+      return candidate
+    }
+  } catch { /* Payload unavailable */ }
+
+  return null
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params
-  return { title: slug.replace(/-/g, ' ') }
+  const { domain, type, slug } = await params
+  const dbType = TYPE_MAP[type]
+  if (!dbType) return {}
+
+  const payloadProduct = await getPayloadProduct(slug, dbType, domain)
+
+  return buildSeoMetadata({
+    seo: payloadProduct?.seo,
+    fallbackTitle: payloadProduct?.title || slug.replace(/-/g, ' '),
+    fallbackDescription:
+      payloadProduct?.shortDescription?.trim() ||
+      extractPlainText(payloadProduct?.longDescription) ||
+      'Explore this NSTC program with curriculum, outcomes, mentors, and enrollment details.',
+    canonicalPath: `/${domain}/${type}/${slug}`,
+  })
 }
 
 export default async function ProductDetailPage({ params }: Props) {
@@ -112,25 +174,7 @@ export default async function ProductDetailPage({ params }: Props) {
       [domain, dbType, slug]
     )
   } catch { /* DB unavailable */ }
-
-  try {
-    const payload = await getPayload({ config })
-    const result = await payload.find({
-      collection: 'products',
-      where: {
-        slug: { equals: slug },
-        type: { equals: dbType },
-        status: { equals: 'published' },
-      },
-      depth: 2,
-      limit: 1,
-    })
-
-    const candidate = result.docs[0] as PayloadProduct | undefined
-    if (candidate && getRelationshipSlug(candidate.domain) === domain) {
-      payloadProduct = candidate
-    }
-  } catch { /* Payload unavailable */ }
+  payloadProduct = await getPayloadProduct(slug, dbType, domain)
 
   if (!product) {
     return (
@@ -154,6 +198,9 @@ export default async function ProductDetailPage({ params }: Props) {
     ? Math.round(((Number(product.price) - Number(product.sale_price)) / Number(product.price)) * 100)
     : null
   const session = await auth()
+  const alreadyEnrolled = session?.user?.id
+    ? await checkAccess(session.user.id, product.id)
+    : false
   const longDescription =
     extractPlainText(payloadProduct?.longDescription) ||
     product.long_description ||
@@ -172,6 +219,15 @@ export default async function ProductDetailPage({ params }: Props) {
     }))
     .filter((item) => item.question) ?? []
   const curriculum = payloadProduct?.curriculum?.filter((module) => module.moduleTitle) ?? []
+  const curriculumLessonCount = curriculum.reduce((total, module) => total + (module.lessons?.length ?? 0), 0)
+  const heroImage = resolveMedia(payloadProduct?.heroImage)
+  const productAudiences = (payloadProduct?.audiences ?? [])
+    .filter((audience) => audience?.name)
+    .map((audience) => ({
+      id: audience.id,
+      name: audience.name as string,
+      slug: audience.slug ?? undefined,
+    }))
   let dbMentors: PayloadMentor[] = []
   let dbRelatedProducts: { id: string; title: string; description: string; href: string }[] = []
 
@@ -251,19 +307,52 @@ export default async function ProductDetailPage({ params }: Props) {
           <div className={styles.mainCol}>
             {/* Hero */}
             <div className={styles.hero}>
-              <div className={styles.heroBadges}>
-                <span className="badge badge-primary">{product.type.replace('_', ' ')}</span>
-                {product.certificate && <span className="badge badge-success">🎓 Certificate</span>}
-                {product.level && <span className="badge badge-neutral">{product.level}</span>}
-                {product.format && <span className="badge badge-neutral">{product.format.replace('_', ' ')}</span>}
+              <div className={styles.heroIntro}>
+                <div className={styles.heroCopy}>
+                  <div className={styles.heroBadges}>
+                    <span className="badge badge-primary">{product.type.replace('_', ' ')}</span>
+                    {product.certificate && <span className="badge badge-success">🎓 Certificate</span>}
+                    {product.level && <span className="badge badge-neutral">{product.level}</span>}
+                    {product.format && <span className="badge badge-neutral">{product.format.replace('_', ' ')}</span>}
+                  </div>
+                  <h1 className={styles.title}>{product.title}</h1>
+                  {product.short_description && (
+                    <p className={styles.shortDesc}>{product.short_description}</p>
+                  )}
+                  <div className={styles.metaRow}>
+                    {product.duration && <span>⏱ {product.duration}</span>}
+                    {curriculum.length > 0 && <span>🧩 {curriculum.length} module{curriculum.length === 1 ? '' : 's'}</span>}
+                    {curriculumLessonCount > 0 && <span>📚 {curriculumLessonCount} lesson{curriculumLessonCount === 1 ? '' : 's'}</span>}
+                  </div>
+                </div>
+                {heroImage?.url ? (
+                  <div className={styles.heroMedia}>
+                    <Image
+                      src={heroImage.url}
+                      alt={heroImage.alt || `${product.title} hero image`}
+                      fill
+                      className={styles.heroImage}
+                      sizes="(max-width: 1024px) 100vw, 420px"
+                    />
+                  </div>
+                ) : null}
               </div>
-              <h1 className={styles.title}>{product.title}</h1>
-              {product.short_description && (
-                <p className={styles.shortDesc}>{product.short_description}</p>
-              )}
-              <div className={styles.metaRow}>
-                {product.duration && <span>⏱ {product.duration}</span>}
-              </div>
+              {productAudiences.length > 0 ? (
+                <div className={styles.audienceChips}>
+                  <span className={styles.audienceLabel}>Best suited for</span>
+                  {productAudiences.map((audience) => (
+                    audience.slug ? (
+                      <Link key={audience.id} href={`/${audience.slug}`} className={styles.audienceChip}>
+                        {audience.name}
+                      </Link>
+                    ) : (
+                      <span key={audience.id} className={styles.audienceChip}>
+                        {audience.name}
+                      </span>
+                    )
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             {/* Tabs */}
@@ -337,6 +426,24 @@ export default async function ProductDetailPage({ params }: Props) {
                     <div key={item} className={styles.infoItem}>
                       <span className={styles.outcomeCheck}>•</span>
                       <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {productAudiences.length ? (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Who This Program Is For</h2>
+                <div className={styles.audiencePanel}>
+                  {productAudiences.map((audience) => (
+                    <div key={audience.id} className={styles.audiencePanelItem}>
+                      <span className={styles.outcomeCheck}>•</span>
+                      {audience.slug ? (
+                        <Link href={`/${audience.slug}`}>{audience.name}</Link>
+                      ) : (
+                        <span>{audience.name}</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -425,12 +532,18 @@ export default async function ProductDetailPage({ params }: Props) {
                 price={Number(product.price)}
                 salePrice={product.sale_price ? Number(product.sale_price) : undefined}
                 isAuthenticated={Boolean(session?.user)}
+                alreadyEnrolled={alreadyEnrolled}
                 userName={session?.user?.name ?? undefined}
                 userEmail={session?.user?.email ?? undefined}
                 className={`btn btn-primary ${styles.enrollBtn}`}
-                label="Enroll Now ->"
               />
-              <p className={styles.enrollNote}>30-day money-back guarantee</p>
+              <p className={styles.enrollNote}>
+                {alreadyEnrolled
+                  ? 'You already have access to this program.'
+                  : displayPrice === 0
+                    ? 'Instant access after free enrollment.'
+                    : '30-day money-back guarantee'}
+              </p>
 
               {/* Highlights */}
               <div className={styles.highlights}>
@@ -469,10 +582,10 @@ export default async function ProductDetailPage({ params }: Props) {
           price={Number(product.price)}
           salePrice={product.sale_price ? Number(product.sale_price) : undefined}
           isAuthenticated={Boolean(session?.user)}
+          alreadyEnrolled={alreadyEnrolled}
           userName={session?.user?.name ?? undefined}
           userEmail={session?.user?.email ?? undefined}
           className="btn btn-primary"
-          label="Enroll Now ->"
         />
       </div>
     </div>

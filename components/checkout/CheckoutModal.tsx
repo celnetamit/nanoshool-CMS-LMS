@@ -72,61 +72,69 @@ export function CheckoutModal({ productId, productTitle, price, salePrice, onClo
   const handlePay = async () => {
     setError('')
     setLoading(true)
+    try {
+      // Ask the backend for the authoritative next step before loading payment SDK.
+      const orderRes = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, couponCode: couponResult?.valid ? couponCode : undefined }),
+      })
 
-    // 1. Load Razorpay SDK
-    const loaded = await loadRazorpayScript()
-    if (!loaded) {
-      setError('Failed to load payment SDK. Please try again.')
-      setLoading(false)
-      return
-    }
+      const order = await orderRes.json()
 
-    // 2. Create order
-    const orderRes = await fetch('/api/payment/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId, couponCode: couponResult?.valid ? couponCode : undefined }),
-    })
+      if (!orderRes.ok) {
+        setError(order.error || 'Failed to create order.')
+        setLoading(false)
+        return
+      }
 
-    if (!orderRes.ok) {
-      const data = await orderRes.json()
-      setError(data.error || 'Failed to create order.')
-      setLoading(false)
-      return
-    }
-
-    const order = await orderRes.json()
-
-    if (order.free) {
-      // Free enrollment — handle separately
-      router.push('/dashboard/participant/enrollments')
-      return
-    }
-
-    // 3. Open Razorpay modal
-    const rzp = new window.Razorpay({
-      key: order.keyId,
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.orderId,
-      name: 'NSTC',
-      description: productTitle,
-      prefill: { name: userName, email: userEmail },
-      theme: { color: '#6366f1' },
-      handler: () => {
-        // DO NOT grant access here — webhook handles it
-        router.push('/dashboard/participant/enrollments?payment=success')
+      if (order.alreadyEnrolled && order.redirect) {
+        router.push(order.redirect)
         onClose()
-      },
-      modal: {
-        ondismiss: () => {
-          setLoading(false)
-        },
-      },
-    })
+        return
+      }
 
-    rzp.open()
-    setLoading(false)
+      if (order.free) {
+        router.push(order.redirect || '/dashboard/participant/enrollments')
+        onClose()
+        return
+      }
+
+      const loaded = await loadRazorpayScript()
+      if (!loaded) {
+        setError('Failed to load payment SDK. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      // 3. Open Razorpay modal
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.orderId,
+        name: 'NSTC',
+        description: productTitle,
+        prefill: { name: userName, email: userEmail },
+        theme: { color: '#6366f1' },
+        handler: () => {
+          // DO NOT grant access here — webhook handles it
+          router.push('/dashboard/participant/enrollments?status=payment-processing')
+          onClose()
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false)
+          },
+        },
+      })
+
+      rzp.open()
+      setLoading(false)
+    } catch {
+      setError('Failed to create order.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -210,7 +218,7 @@ export function CheckoutModal({ productId, productTitle, price, salePrice, onClo
           onClick={handlePay}
           disabled={loading}
         >
-          {loading ? 'Processing...' : `Pay ₹${finalAmount.toLocaleString('en-IN')} →`}
+          {loading ? 'Processing...' : finalAmount === 0 ? 'Enroll Free ->' : `Pay ₹${finalAmount.toLocaleString('en-IN')} ->`}
         </button>
 
         <p className={styles.guarantee}>🔒 Secure payment · 30-day money-back guarantee</p>

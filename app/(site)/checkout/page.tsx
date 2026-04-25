@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
+import { checkAccess } from '@/services/enrollment.service'
 import { CheckoutFlow } from '@/components/checkout/CheckoutFlow'
 
 type CheckoutPageProps = {
@@ -65,6 +66,11 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     )
   }
 
+  const alreadyEnrolled = await checkAccess(session.user.id, product.id)
+  if (alreadyEnrolled) {
+    redirect('/dashboard/participant/enrollments?status=already-enrolled')
+  }
+
   return (
     <CheckoutFlow
       productId={product.id}
@@ -76,4 +82,3 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     />
   )
 }
-

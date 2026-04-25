@@ -30,8 +30,8 @@ export async function createEnrollment({
   )
 
   if (existing) {
-    // If already active, just return it
-    if (existing.access_status === 'active') return existing
+    // Replays or duplicate purchase attempts should not downgrade completed access.
+    if (existing.access_status === 'active' || existing.access_status === 'completed') return existing
 
     // Update to active
     const [updated] = await query<DBEnrollment>(

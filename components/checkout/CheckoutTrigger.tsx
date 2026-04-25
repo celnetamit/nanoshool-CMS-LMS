@@ -10,6 +10,8 @@ type CheckoutTriggerProps = {
   price: number
   salePrice?: number
   isAuthenticated: boolean
+  alreadyEnrolled?: boolean
+  enrollmentHref?: string
   userName?: string
   userEmail?: string
   className?: string
@@ -22,15 +24,29 @@ export function CheckoutTrigger({
   price,
   salePrice,
   isAuthenticated,
+  alreadyEnrolled = false,
+  enrollmentHref = '/dashboard/participant/enrollments',
   userName,
   userEmail,
   className = 'btn btn-primary',
-  label = 'Enroll Now ->',
+  label,
 }: CheckoutTriggerProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const resolvedPrice = salePrice ?? price
+  const resolvedLabel = label ?? (
+    alreadyEnrolled
+      ? 'Go to My Enrollment ->'
+      : resolvedPrice === 0
+        ? 'Enroll Free ->'
+        : 'Enroll Now ->'
+  )
 
   const onClick = () => {
+    if (alreadyEnrolled) {
+      router.push(enrollmentHref)
+      return
+    }
     if (!isAuthenticated) {
       router.push(`/api/enroll?productId=${productId}`)
       return
@@ -41,7 +57,7 @@ export function CheckoutTrigger({
   return (
     <>
       <button type="button" className={className} onClick={onClick}>
-        {label}
+        {resolvedLabel}
       </button>
       {open ? (
         <CheckoutModal
@@ -57,4 +73,3 @@ export function CheckoutTrigger({
     </>
   )
 }
-

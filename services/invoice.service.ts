@@ -1,6 +1,16 @@
 import { query } from '@/lib/db'
 import type { DBInvoice } from '@/types'
 
+export type UserInvoice = DBInvoice & {
+  razorpay_order_id?: string | null
+  razorpay_payment_id?: string | null
+  currency?: string | null
+  product_title?: string | null
+  product_slug?: string | null
+  product_type?: string | null
+  domain_slug?: string | null
+}
+
 // ─── Generate invoice record ───────────────────────────────
 export async function createInvoice({
   userId,
@@ -37,11 +47,16 @@ export async function linkInvoiceToEnrollment(enrollmentId: string, invoiceId: s
 }
 
 // ─── Get user invoices ─────────────────────────────────────
-export async function getUserInvoices(userId: string): Promise<DBInvoice[]> {
-  return query<DBInvoice>(
-    `SELECT i.*, p.razorpay_order_id, p.razorpay_payment_id, p.currency
+export async function getUserInvoices(userId: string): Promise<UserInvoice[]> {
+  return query<UserInvoice>(
+    `SELECT i.*, p.razorpay_order_id, p.razorpay_payment_id, p.currency,
+            prod.title AS product_title, prod.slug AS product_slug, prod.type AS product_type,
+            d.slug AS domain_slug
      FROM invoices i
      LEFT JOIN payments p ON p.id = i.payment_id
+     LEFT JOIN enrollments e ON e.invoice_id = i.id
+     LEFT JOIN products prod ON prod.id = e.product_id
+     LEFT JOIN domains d ON d.id = prod.domain_id
      WHERE i.user_id = $1
      ORDER BY i.created_at DESC`,
     [userId]

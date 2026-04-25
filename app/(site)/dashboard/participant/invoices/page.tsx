@@ -1,19 +1,16 @@
 import { auth } from '@/lib/auth'
-import { getUserInvoices } from '@/services/invoice.service'
+import Link from 'next/link'
+import { getUserInvoices, type UserInvoice } from '@/services/invoice.service'
 import styles from './invoices.module.css'
 
 export default async function InvoicesPage() {
   const session = await auth()
   if (!session?.user) return null
 
-  let invoices: {
-    id: string; amount: number; status: string; pdf_url: string | null;
-    razorpay_payment_id: string | null; created_at: string; currency: string;
-  }[] = []
+  let invoices: UserInvoice[] = []
 
   try {
-    const raw = await getUserInvoices(session.user.id)
-    invoices = raw as unknown as typeof invoices
+    invoices = await getUserInvoices(session.user.id)
   } catch { /* DB unavailable */ }
 
   return (
@@ -36,9 +33,12 @@ export default async function InvoicesPage() {
             <span>Actions</span>
           </div>
           {invoices.map((inv) => (
-            <div key={inv.id} className={styles.tableRow}>
+            <div key={inv.id} id={`invoice-${inv.id}`} className={styles.tableRow}>
               <span className={styles.invoiceId}>
                 #{inv.id.slice(0, 8).toUpperCase()}
+                {inv.product_title ? (
+                  <span className={styles.invoiceTitle}>{inv.product_title}</span>
+                ) : null}
               </span>
               <span className={styles.amount}>
                 {inv.currency || 'INR'} {Number(inv.amount).toLocaleString('en-IN')}
@@ -52,13 +52,23 @@ export default async function InvoicesPage() {
                 {new Date(inv.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
               </span>
               <span>
-                {inv.pdf_url ? (
-                  <a href={inv.pdf_url} download className="btn btn-secondary btn--sm">
-                    ↓ PDF
-                  </a>
-                ) : (
-                  <span className={styles.pending}>Generating...</span>
-                )}
+                <span className={styles.actions}>
+                  {inv.product_slug && inv.product_type && inv.domain_slug ? (
+                    <Link
+                      href={`/${inv.domain_slug}/${inv.product_type.replace('_', '-')}/${inv.product_slug}`}
+                      className="btn btn-ghost btn--sm"
+                    >
+                      Program
+                    </Link>
+                  ) : null}
+                  {inv.pdf_url ? (
+                    <a href={inv.pdf_url} download className="btn btn-secondary btn--sm">
+                      ↓ PDF
+                    </a>
+                  ) : (
+                    <span className={styles.pending}>Generating...</span>
+                  )}
+                </span>
               </span>
             </div>
           ))}

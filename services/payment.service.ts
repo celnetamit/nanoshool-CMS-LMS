@@ -2,6 +2,14 @@ import Razorpay from 'razorpay'
 import { query, queryOne } from '@/lib/db'
 import type { DBPayment } from '@/types'
 
+export type UserPayment = DBPayment & {
+  product_id?: string | null
+  product_title?: string | null
+  product_slug?: string | null
+  product_type?: string | null
+  domain_slug?: string | null
+}
+
 // Lazy-init: avoid constructor throwing during Next.js build when env vars aren't set
 let _razorpay: Razorpay | null = null
 function getRazorpay(): Razorpay {
@@ -138,5 +146,19 @@ export async function markPaymentRefunded(razorpayPaymentId: string): Promise<vo
     `UPDATE payments SET status = 'refunded', updated_at = NOW()
      WHERE razorpay_payment_id = $1`,
     [razorpayPaymentId]
+  )
+}
+
+export async function getUserPayments(userId: string): Promise<UserPayment[]> {
+  return query<UserPayment>(
+    `SELECT pay.*, prod.id AS product_id, prod.title AS product_title, prod.slug AS product_slug,
+            prod.type AS product_type, d.slug AS domain_slug
+     FROM payments pay
+     LEFT JOIN enrollments e ON e.payment_id = pay.id
+     LEFT JOIN products prod ON prod.id = e.product_id
+     LEFT JOIN domains d ON d.id = prod.domain_id
+     WHERE pay.user_id = $1
+     ORDER BY pay.created_at DESC`,
+    [userId]
   )
 }

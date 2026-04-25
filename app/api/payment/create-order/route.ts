@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { queryOne } from '@/lib/db'
 import { createPaymentOrder, createFreePayment } from '@/services/payment.service'
 import { validateCoupon, applyDiscount, useCoupon } from '@/services/coupon.service'
-import { createEnrollment } from '@/services/enrollment.service'
+import { createEnrollment, checkAccess } from '@/services/enrollment.service'
 import { createInvoice, generateInvoicePdf, linkInvoiceToEnrollment, updateInvoicePdf } from '@/services/invoice.service'
 import { storeInvoicePdf } from '@/services/invoiceStorage.service'
 import { enqueueMoodleSync } from '@/lib/queues/moodle-sync.queue'
@@ -52,6 +52,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Product is not available' }, { status: 400 })
   }
 
+  const alreadyEnrolled = await checkAccess(session.user.id, productId)
+  if (alreadyEnrolled) {
+    return NextResponse.json({
+      alreadyEnrolled: true,
+      redirect: '/dashboard/participant/enrollments?status=already-enrolled',
+    })
+  }
+
   // ─── Calculate amount ───────────────────────────
   let baseAmount = Number(product.sale_price ?? product.price)
   let couponApplied: { code: string; discount: number } | undefined
@@ -82,13 +90,13 @@ export async function POST(req: NextRequest) {
 
     if (existingEnrollment?.access_status === 'active' || existingEnrollment?.access_status === 'completed') {
       return NextResponse.json({
-        free: true,
-        productId,
-        enrolled: true,
-        alreadyEnrolled: true,
-        redirect: '/dashboard/participant/enrollments',
-      })
-    }
+      free: true,
+      productId,
+      enrolled: true,
+      alreadyEnrolled: true,
+      redirect: '/dashboard/participant/enrollments?status=already-enrolled',
+    })
+  }
 
     const freePayment = await createFreePayment({
       userId: session.user.id,
@@ -158,7 +166,7 @@ export async function POST(req: NextRequest) {
       productId,
       enrolled: true,
       enrollmentId: enrollment.id,
-      redirect: '/dashboard/participant/enrollments',
+      redirect: '/dashboard/participant/enrollments?status=free-enrolled',
     })
   }
 
