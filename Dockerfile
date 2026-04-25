@@ -42,15 +42,23 @@ RUN adduser --system --uid 1001 nextjs
 RUN mkdir -p .next public
 RUN chown nextjs:nodejs .next
 
+# Install production dependencies for runtime scripts and server modules.
+COPY package.json package-lock.json* ./
+COPY scripts/patch-drizzle-kit.js ./scripts/patch-drizzle-kit.js
+RUN npm ci --omit=dev
+
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
-# Include full dependency tree so operational scripts (seed, migrations, workers)
-# can run in the deployed /app container.
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+# Needed by scripts/seed-public-content.ts in runtime image.
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/@esbuild/linux-x64 ./node_modules/@esbuild/linux-x64
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
 
 USER nextjs
 
